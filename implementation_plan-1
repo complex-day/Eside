@@ -1,0 +1,302 @@
+# Eside MVP - Comprehensive Architecture & Implementation Plan
+
+This implementation plan is synthesized directly from all official project documents:
+- [`agent-rules.md`](file:///c:/Users/Lenovo/Desktop/PROJECT%20CREATED/Eside_v1/agent-rules.md) / [`GEMINI.md`](file:///c:/Users/Lenovo/Desktop/PROJECT%20CREATED/Eside_v1/GEMINI.md)
+- [`docs/PRD.md`](file:///c:/Users/Lenovo/Desktop/PROJECT%20CREATED/Eside_v1/docs/PRD.md)
+- [`docs/Architecture.md`](file:///c:/Users/Lenovo/Desktop/PROJECT%20CREATED/Eside_v1/docs/Architecture.md)
+- [`docs/Database,.md`](file:///c:/Users/Lenovo/Desktop/PROJECT%20CREATED/Eside_v1/docs/Database,.md)
+- [`docs/APIs.md`](file:///c:/Users/Lenovo/Desktop/PROJECT%20CREATED/Eside_v1/docs/APIs.md)
+- [`docs/Design.md`](file:///c:/Users/Lenovo/Desktop/PROJECT%20CREATED/Eside_v1/docs/Design.md)
+- [`docs/Flows.md`](file:///c:/Users/Lenovo/Desktop/PROJECT%20CREATED/Eside_v1/docs/Flows.md)
+- [`docs/Analytics.md`](file:///c:/Users/Lenovo/Desktop/PROJECT%20CREATED/Eside_v1/docs/Analytics.md)
+
+---
+
+## 1. Recommended Project Structure
+
+Monolithic Next.js (App Router) structure enforcing TypeScript strictness, shadcn/ui component abstraction, Supabase SSR authentication, and strict adherence to the `/api/v1` contract.
+
+```text
+Eside_v1/
+├── .agents/
+│   └── rules/
+│       └── agent-rules.md
+├── docs/                      # PRD, Architecture, Database, APIs, Design, Flows, Analytics
+├── public/                    # Static assets, icons, manifest
+├── src/
+│   ├── app/                   # Next.js App Router
+│   │   ├── (auth)/            # Auth routes group (anonymous/public access)
+│   │   │   ├── layout.tsx     # Focused auth layout
+│   │   │   ├── login/
+│   │   │   │   └── page.tsx   # Login screen
+│   │   │   └── register/
+│   │   │       └── page.tsx   # Registration & username setup screen
+│   │   ├── (main)/            # Core app layout (with mobile bottom nav & desktop header)
+│   │   │   ├── layout.tsx     # Shell layout with MobileBottomNav (360-430px) & TopNav
+│   │   │   ├── page.tsx       # Home Feed (Trending/Latest with Category Filter)
+│   │   │   ├── landing/       # Value prop landing page (<10s value explanation)
+│   │   │   │   └── page.tsx
+│   │   │   ├── experiences/
+│   │   │   │   ├── [id]/      # Experience detail + Outcome Timeline + Comments + Bookmark/Report
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── new/       # Create Experience screen
+│   │   │   │       └── page.tsx
+│   │   │   ├── categories/
+│   │   │   │   ├── page.tsx   # Categories list overview
+│   │   │   │   └── [id]/      # Category specific experiences feed
+│   │   │   │       └── page.tsx
+│   │   │   ├── insights/      # Insights Dashboard (Stats, Patterns, North Star metrics)
+│   │   │   │   └── page.tsx
+│   │   │   ├── search/        # Search screen with keyword & filter query
+│   │   │   │   └── page.tsx
+│   │   │   └── profile/       # User profile (My Experiences, Outcomes, Bookmarks)
+│   │   │       └── page.tsx
+│   │   ├── api/               # API Route Handlers matching /api/v1 exactly
+│   │   │   └── v1/
+│   │   │       ├── auth/
+│   │   │       │   └── callback/route.ts
+│   │   │       ├── experiences/
+│   │   │       │   ├── route.ts              # GET (feed), POST (create)
+│   │   │       │   └── [id]/
+│   │   │       │       └── route.ts          # GET (detail), PUT (update), DELETE (delete)
+│   │   │       ├── categories/
+│   │   │       │   ├── route.ts              # GET (all categories)
+│   │   │       │   └── [id]/
+│   │   │       │       └── experiences/
+│   │   │       │           └── route.ts      # GET (category experiences)
+│   │   │       ├── comments/
+│   │   │       │   ├── route.ts              # POST (create comment)
+│   │   │       │   └── [id]/
+│   │   │       │       └── route.ts          # DELETE (delete comment)
+│   │   │       ├── outcomes/
+│   │   │       │   ├── route.ts              # POST (create outcome)
+│   │   │       │   └── [experienceId]/
+│   │   │       │       └── route.ts          # GET (get outcomes)
+│   │   │       ├── bookmarks/
+│   │   │       │   ├── route.ts              # GET (all), POST (save)
+│   │   │       │   └── [experienceId]/
+│   │   │       │       └── route.ts          # DELETE (remove)
+│   │   │       ├── reports/
+│   │   │       │   └── route.ts              # POST (report experience or comment)
+│   │   │       ├── profile/
+│   │   │       │   └── route.ts              # GET (current user), PUT (update)
+│   │   │       ├── search/
+│   │   │       │   └── route.ts              # GET (search experiences)
+│   │   │       └── insights/
+│   │   │           └── route.ts              # GET (platform insights aggregate)
+│   │   ├── layout.tsx         # Root HTML layout, font setup (Inter & JetBrains Mono)
+│   │   └── globals.css        # Tailwind theme colors (#4F46E5, #06B6D4, #0F172A, etc.)
+│   ├── components/
+│   │   ├── ui/                # shadcn/ui primitives (Button, Card, Dialog, Input, Textarea, Badge, Tabs, Toast)
+│   │   ├── shared/            # Layout and common components
+│   │   │   ├── Header.tsx
+│   │   │   ├── MobileBottomNav.tsx # 🏠 Home, 🔍 Search, ➕ Share, 📊 Insights, 👤 Profile
+│   │   │   ├── EmptyState.tsx      # "No experiences found. Be the first person to share."
+│   │   │   ├── LoadingSkeleton.tsx
+│   │   │   └── ErrorBoundary.tsx
+│   │   ├── experiences/
+│   │   │   ├── ExperienceCard.tsx  # Category, Title, Preview, Tags, Metrics, Outcome indicator
+│   │   │   ├── ExperienceFeed.tsx  # Paginated feed with sort & filter
+│   │   │   └── ExperienceForm.tsx  # Title, Story, Category, Tags, Anonymous toggle
+│   │   ├── outcomes/
+│   │   │   ├── OutcomeTimeline.tsx # Day 0, Day 30, Day 90, Day 180 milestone nodes
+│   │   │   ├── OutcomeCard.tsx
+│   │   │   └── AddOutcomeModal.tsx # 30, 90, 180 days picker & update entry
+│   │   ├── comments/
+│   │   │   ├── CommentList.tsx
+│   │   │   ├── CommentCard.tsx     # Username, Comment, Timestamp, Delete action
+│   │   │   └── CommentInput.tsx
+│   │   ├── categories/
+│   │   │   ├── CategoryChips.tsx   # Horizontal scrollable category filters
+│   │   │   └── CategoryGrid.tsx
+│   │   ├── insights/
+│   │   │   ├── InsightCard.tsx     # Title, Statistic, Trend Indicator, Context
+│   │   │   └── MetricHighlights.tsx
+│   │   ├── moderation/
+│   │   │   └── ReportModal.tsx     # Reason select (Spam, Harassment, Misinformation, etc.)
+│   │   └── profile/
+│   │       ├── ProfileHeader.tsx
+│   │       └── ProfileTabs.tsx     # Experiences, Outcome Updates, Saved Bookmarks
+│   ├── lib/
+│   │   ├── supabase/
+│   │   │   ├── client.ts           # Browser Supabase client
+│   │   │   ├── server.ts           # Server Supabase client with cookies
+│   │   │   ├── middleware.ts       # Middleware session updater
+│   │   │   └── database.types.ts   # Auto-generated Supabase schema types
+│   │   ├── validations/            # Zod validation schemas
+│   │   │   ├── experience.ts
+│   │   │   ├── comment.ts
+│   │   │   ├── outcome.ts
+│   │   │   ├── report.ts
+│   │   │   ├── profile.ts
+│   │   │   └── auth.ts
+│   │   ├── analytics/
+│   │   │   ├── client.ts           # Client event dispatcher (trackEvent)
+│   │   │   ├── events.ts           # Typed event definitions (user_registered, outcome_viewed, etc.)
+│   │   │   └── server.ts           # Server-side event recorder
+│   │   ├── rate-limit.ts           # In-memory / Upstash rate limiter (10 exp/hr, 50 comm/hr, 20 rep/hr)
+│   │   └── utils.ts                # cn(), formatting, date helpers
+│   ├── middleware.ts               # Next.js middleware for route protection & session refresh
+│   └── types/                      # Shared API contracts & TypeScript interfaces
+│       ├── api.ts                  # ApiResponse<T>, ApiError
+│       ├── experience.ts
+│       ├── category.ts
+│       ├── outcome.ts
+│       ├── comment.ts
+│       └── report.ts
+├── supabase/
+│   ├── migrations/                 # Sequential SQL migration files
+│   │   ├── 20260830000001_create_users_table.sql
+│   │   ├── 20260830000002_create_categories_table.sql
+│   │   ├── 20260830000003_create_experiences_table.sql
+│   │   ├── 20260830000004_create_tags_and_experience_tags.sql
+│   │   ├── 20260830000005_create_comments_table.sql
+│   │   ├── 20260830000006_create_outcomes_table.sql
+│   │   ├── 20260830000007_create_reports_table.sql
+│   │   ├── 20260830000008_create_bookmarks_table.sql
+│   │   ├── 20260830000009_create_analytics_events_table.sql
+│   │   └── 20260830000010_setup_rls_and_triggers.sql
+│   └── seed.sql                    # Initial categories and default tags
+├── .env.example
+├── components.json                 # shadcn/ui configuration
+├── next.config.mjs
+├── package.json
+├── tailwind.config.ts
+└── tsconfig.json
+```
+
+---
+
+## 2. Milestone Breakdown
+
+| Milestone | Key Deliverables | Verification / Acceptance Criteria |
+| :--- | :--- | :--- |
+| **Milestone 1: Environment & Project Foundation** | • Next.js 14/15 App Router setup with TS strict mode.<br>• Tailwind CSS configuration with Eside Design Tokens (`#4F46E5`, `#06B6D4`, `#0F172A`, `#1E293B`, `#F8FAFC`).<br>• Font setup: Inter (headings/body) + JetBrains Mono (analytics).<br>• shadcn/ui installation & base primitive components.<br>• Supabase SSR client setup with cookie handling.<br>• Mobile-first container shell (360px–430px) + Responsive layout. | `npm run build` passes with zero errors; theme variables render correctly; Supabase connectivity initialized. |
+| **Milestone 2: Database Migrations & RLS Policies** | • 10 sequential SQL migrations matching `Database,.md` schema.<br>• RLS policies for profiles, experiences, comments, outcomes, bookmarks, reports, analytics.<br>• Auto-create user profile trigger on `auth.users` signup.<br>• Seed script for 8 core categories + starter tags. | All migrations apply without error; RLS verified (unauthenticated users can read public active experiences; unauthorized edits rejected). |
+| **Milestone 3: Authentication & Anonymous Profile Management** | • Supabase Auth email registration + login.<br>• Username selection and profile setup.<br>• Session persistence via middleware.<br>• Profile screen (view user's experiences, outcomes, bookmarks). | User can sign up, set unique username, log in, view own profile, and log out with cookies persisted. |
+| **Milestone 4: Experiences & Category Discovery** | • Experience creation form (Title, Story, Category, Tags, Anonymous toggle).<br>• Validation with Zod (Title <= 150 chars, story & category required).<br>• Experience feed with CategoryChips filter, sort (latest/trending), pagination.<br>• Search endpoint & search results screen.<br>• Experience detail view with story and author info. | Feed loads under 500ms; search under 300ms; experiences created and rendered in feed correctly. |
+| **Milestone 5: Outcome Timeline & Community Discussion** | • Outcome update creation (restricted to 30, 90, 180 days milestone options).<br>• Chronological OutcomeTimeline component on experience detail page.<br>• Commenting system (create comment, delete own comment).<br>• Bookmark / Unbookmark toggle functionality. | Author can append outcomes over time; reader can read entire outcome progression; comments can be posted and deleted by owner. |
+| **Milestone 6: Insights Dashboard & Content Moderation** | • Insights Dashboard aggregating metrics (`total_experiences`, `total_users`, `total_outcomes`, category distribution).<br>• Report content modal & `/api/v1/reports` endpoint (spam, harassment, etc.).<br>• Rate limiting implementation (10 exp/hr, 50 comm/hr, 20 rep/hr). | Insights page aggregates database stats; reporting creates moderation queue entries; rate limit triggers 429 when exceeded. |
+| **Milestone 7: Analytics Event Tracking & Polish** | • Track all documented events (`user_registered`, `experience_viewed`, `outcome_viewed`, `search_performed`, etc.).<br>• North Star tracking: "Experience Learning Session" (Experience viewed + Outcome viewed).<br>• Accessibility audit (WCAG AA, focus states, keyboard nav, screen reader labels).<br>• Performance audit (Feed <500ms, Detail <400ms, Search <300ms). | Zero TypeScript warnings; zero console errors; smooth mobile experience on 360px–430px viewports. |
+
+---
+
+## 3. Dependency List
+
+### Production Dependencies (`dependencies`)
+```json
+{
+  "next": "^14.2.0",
+  "react": "^18.3.0",
+  "react-dom": "^18.3.0",
+  "@supabase/supabase-js": "^2.45.0",
+  "@supabase/ssr": "^0.5.0",
+  "tailwindcss": "^3.4.0",
+  "postcss": "^8.4.0",
+  "autoprefixer": "^10.4.0",
+  "clsx": "^2.1.1",
+  "tailwind-merge": "^2.5.2",
+  "lucide-react": "^0.439.0",
+  "zod": "^3.23.8",
+  "react-hook-form": "^7.53.0",
+  "@hookform/resolvers": "^3.9.0",
+  "date-fns": "^3.6.0",
+  "@radix-ui/react-dialog": "^1.1.1",
+  "@radix-ui/react-dropdown-menu": "^2.1.1",
+  "@radix-ui/react-slot": "^1.1.0",
+  "@radix-ui/react-tabs": "^1.1.0",
+  "@radix-ui/react-toast": "^1.2.1",
+  "@radix-ui/react-label": "^2.1.0",
+  "class-variance-authority": "^0.7.0"
+}
+```
+
+### Development Dependencies (`devDependencies`)
+```json
+{
+  "typescript": "^5.5.0",
+  "@types/node": "^20.14.0",
+  "@types/react": "^18.3.0",
+  "@types/react-dom": "^18.3.0",
+  "eslint": "^8.57.0",
+  "eslint-config-next": "^14.2.0",
+  "prettier": "^3.3.3",
+  "prettier-plugin-tailwindcss": "^0.6.6"
+}
+```
+
+*(Per Rule 2: Excludes all chat/socket libraries, payment processors, gamification packages, complex microservice brokers).*
+
+---
+
+## 4. Database Migration Order
+
+To guarantee referential integrity and zero migration deadlocks:
+
+1. **`001_create_users.sql`**:
+   - Creates `public.users` table (`id` UUID PK references `auth.users(id)` ON DELETE CASCADE, `username` VARCHAR(30) UNIQUE NOT NULL, `avatar_url` TEXT, `bio` TEXT, `created_at`, `updated_at`).
+   - Trigger `on_auth_user_created` to automatically insert into `public.users` on Supabase Auth signup.
+2. **`002_create_categories.sql`**:
+   - Creates `public.categories` (`id` UUID PK DEFAULT gen_random_uuid(), `name` VARCHAR(50) NOT NULL, `description` TEXT, `created_at` TIMESTAMPTZ DEFAULT now()).
+   - Seeds initial 8 categories: Education, Career, Relationships, Family, Finance, Health, Mental Wellbeing, Social Life.
+3. **`003_create_experiences.sql`**:
+   - Creates `public.experiences` (`id` UUID PK, `author_id` UUID REFERENCES users(id) ON DELETE CASCADE, `category_id` UUID REFERENCES categories(id) ON DELETE RESTRICT, `title` VARCHAR(150) NOT NULL, `story` TEXT NOT NULL, `is_anonymous` BOOLEAN DEFAULT true, `status` VARCHAR(20) DEFAULT 'active', `created_at` TIMESTAMPTZ DEFAULT now(), `updated_at` TIMESTAMPTZ DEFAULT now()).
+   - Indexes on `author_id`, `category_id`, and `created_at DESC`.
+4. **`004_create_tags.sql`**:
+   - Creates `public.tags` (`id` UUID PK, `name` VARCHAR(50) UNIQUE NOT NULL, `created_at` TIMESTAMPTZ DEFAULT now()).
+   - Creates `public.experience_tags` (`experience_id` UUID REFERENCES experiences(id) ON DELETE CASCADE, `tag_id` UUID REFERENCES tags(id) ON DELETE CASCADE, PRIMARY KEY (experience_id, tag_id)).
+5. **`005_create_comments.sql`**:
+   - Creates `public.comments` (`id` UUID PK, `experience_id` UUID REFERENCES experiences(id) ON DELETE CASCADE, `author_id` UUID REFERENCES users(id) ON DELETE CASCADE, `content` TEXT NOT NULL, `created_at` TIMESTAMPTZ DEFAULT now(), `updated_at` TIMESTAMPTZ DEFAULT now()).
+   - Indexes on `experience_id` and `created_at DESC`.
+6. **`006_create_outcomes.sql`**:
+   - Creates `public.outcomes` (`id` UUID PK, `experience_id` UUID REFERENCES experiences(id) ON DELETE CASCADE, `days_after` INTEGER NOT NULL CHECK (days_after IN (30, 90, 180)), `content` TEXT NOT NULL, `created_at` TIMESTAMPTZ DEFAULT now()).
+   - Index on `experience_id`.
+7. **`007_create_reports.sql`**:
+   - Creates `public.reports` (`id` UUID PK, `reporter_id` UUID REFERENCES users(id) ON DELETE SET NULL, `experience_id` UUID REFERENCES experiences(id) ON DELETE CASCADE, `comment_id` UUID REFERENCES comments(id) ON DELETE CASCADE, `reason` VARCHAR(100) NOT NULL, `status` VARCHAR(20) DEFAULT 'pending', `created_at` TIMESTAMPTZ DEFAULT now()).
+8. **`008_create_bookmarks.sql`**:
+   - Creates `public.bookmarks` (`user_id` UUID REFERENCES users(id) ON DELETE CASCADE, `experience_id` UUID REFERENCES experiences(id) ON DELETE CASCADE, `created_at` TIMESTAMPTZ DEFAULT now(), PRIMARY KEY (user_id, experience_id)).
+9. **`009_create_analytics_events.sql`**:
+   - Creates `public.analytics_events` (`id` UUID PK DEFAULT gen_random_uuid(), `user_id` UUID REFERENCES users(id) ON DELETE SET NULL, `event_name` VARCHAR(100) NOT NULL, `entity_id` UUID, `metadata` JSONB DEFAULT '{}'::jsonb, `created_at` TIMESTAMPTZ DEFAULT now()).
+10. **`010_enable_rls_and_policies.sql`**:
+    - Enables Row Level Security (RLS) on all tables.
+    - Profiles: Public SELECT; UPDATE only where `auth.uid() = id`.
+    - Experiences: Public SELECT for `status = 'active'`; INSERT where `auth.uid() = author_id`; UPDATE/DELETE only where `auth.uid() = author_id`.
+    - Comments: Public SELECT; INSERT where `auth.uid() = author_id`; DELETE only where `auth.uid() = author_id`.
+    - Outcomes: Public SELECT; INSERT where `auth.uid() = (SELECT author_id FROM experiences WHERE id = experience_id)`.
+    - Bookmarks: SELECT/INSERT/DELETE where `auth.uid() = user_id`.
+    - Reports: INSERT for authenticated users; SELECT only for admin/moderator role.
+
+---
+
+## 5. Risks and Assumptions
+
+### Assumptions
+1. **Supabase Environment**: A Supabase project is provisioned with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` configured in `.env.local`.
+2. **Email Verification**: For development/testing, Supabase Auth email confirmation can either be tested via mock mailer or auto-confirmed.
+3. **Mobile First Target**: All page layouts and components prioritize 360px–430px viewports with bottom navigation bar before expanding to 1200px max desktop view.
+
+### Risks and Mitigations
+| Risk | Potential Impact | Mitigation Strategy |
+| :--- | :--- | :--- |
+| **N+1 Query & Join Latency** | Feed response time exceeds the 500ms target (Rule 14). | Use optimized SQL joins or single-query Supabase RPC/views for feeds (fetching experience + category + outcome count + tags in one roundtrip). |
+| **Anonymous Identity Leakage** | Exposing user emails or private identifiers. | `public.users` table strictly contains `username`, `avatar_url`, and `bio`. Never select or expose `auth.users.email` in any public API. |
+| **Rate Limit & Spam Abuse** | Spam experiences or comments submitted in volume. | Implement the documented API rate limits (10 experiences/hr, 50 comments/hr, 20 reports/hr) via route middleware. |
+| **Strict Scope Creep** | Unapproved features added. | Adhere strictly to Rule 2; block all chat, notifications, gamification, and AI agents. |
+
+---
+
+## Verification Plan
+
+### Automated Checks
+- `npm run lint` — ESLint strict verification with no warnings.
+- `npx tsc --noEmit` — Strict TypeScript type-check ensuring zero `any` types.
+- `npm run build` — Next.js production build verification.
+
+### Manual / Browser Verification
+- **Auth Flow**: Register anonymous account -> Set username -> Login -> Logout.
+- **Experience Flow**: Create experience -> View in Trending feed -> Filter by Category -> Search by keyword.
+- **Outcome Flow**: Add 30-day outcome update -> Verify milestone node in OutcomeTimeline.
+- **Comment Flow**: Post comment -> Verify rendered on experience -> Delete own comment.
+- **Bookmark Flow**: Bookmark experience -> Check under Profile saved tab -> Remove bookmark.
+- **Report Flow**: Submit report -> Verify recorded in `reports` table.
+- **Responsive & A11y Audit**: Test in mobile viewport (390x844px iPhone 12/13/14 size) for bottom nav, touch targets, and contrast.

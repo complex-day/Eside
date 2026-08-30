@@ -1,0 +1,191 @@
+# Milestone 1 Implementation Plan: Foundation, Styling & Supabase Auth Setup
+
+## Milestone Overview
+Milestone 1 establishes the rock-solid foundation for the entire Eside platform. It sets up the Next.js App Router monolith with strict TypeScript typing, Tailwind CSS custom theme tokens, shadcn/ui components, Supabase SSR client/server utilities, session refresh middleware, and initial deployment configs.
+
+---
+
+## 1. Folder Structure (Milestone 1 Scope)
+
+```text
+Eside_v1/
+├── .agents/
+│   └── rules/
+│       └── agent-rules.md
+├── docs/                                  # Project documentation
+├── public/                                # Favicons, fonts, static assets
+├── src/
+│   ├── app/
+│   │   ├── (auth)/                        # Auth group layout & foundation
+│   │   │   ├── layout.tsx
+│   │   │   ├── login/
+│   │   │   │   └── page.tsx               # Milestone 1 test auth screen
+│   │   │   └── register/
+│   │   │       └── page.tsx               # Milestone 1 test register screen
+│   │   ├── (main)/
+│   │   │   ├── layout.tsx                 # Base responsive mobile-first shell (360-430px)
+│   │   │   └── page.tsx                   # Baseline health & connection status page
+│   │   ├── api/
+│   │   │   └── v1/
+│   │   │       └── auth/
+│   │   │           └── callback/
+│   │   │               └── route.ts       # Supabase Auth code exchange handler
+│   │   ├── layout.tsx                     # Root HTML layout with Inter + JetBrains Mono fonts
+│   │   └── globals.css                    # Tailwind tokens, dark theme variables (#0F172A, #4F46E5, etc.)
+│   ├── components/
+│   │   ├── ui/                            # shadcn/ui primitives
+│   │   │   ├── button.tsx
+│   │   │   ├── card.tsx
+│   │   │   ├── input.tsx
+│   │   │   ├── label.tsx
+│   │   │   └── toast.tsx
+│   │   └── shared/
+│   │       ├── Header.tsx                 # Mobile-first top header with brand logo
+│   │       ├── MobileBottomNav.tsx        # Bottom navigation bar (360px–430px)
+│   │       └── SupabaseStatusBadge.tsx    # Connection health indicator
+│   ├── lib/
+│   │   ├── supabase/
+│   │   │   ├── client.ts                  # Browser Supabase client (createBrowserClient)
+│   │   │   ├── server.ts                  # Server Supabase client with Next.js cookies (createServerClient)
+│   │   │   ├── middleware.ts              # Session refresh & cookie synchronization
+│   │   │   └── database.types.ts          # Database schema TypeScript types definition
+│   │   ├── validations/
+│   │   │   └── auth.ts                    # Zod validation schema for registration/login
+│   │   └── utils.ts                       # Tailwind `cn()` helper & utility functions
+│   ├── middleware.ts                      # Next.js edge middleware executing Supabase session sync
+│   └── types/
+│       ├── api.ts                         # Standard API response interfaces (ApiResponse<T>, ApiError)
+│       └── auth.ts                        # Session, AuthUser, and Profile types
+├── .env.example                           # Environment variable schema
+├── .env.local                             # Local Supabase credentials
+├── components.json                        # shadcn/ui config
+├── next.config.mjs                        # Next.js configuration
+├── package.json                           # Dependencies & scripts
+├── postcss.config.mjs                     # PostCSS config
+├── tailwind.config.ts                     # Tailwind custom palette & font extensions
+└── tsconfig.json                          # Strict TypeScript configuration
+```
+
+---
+
+## 2. Dependencies for Milestone 1
+
+### Production Dependencies (`dependencies`)
+```json
+{
+  "next": "^14.2.10",
+  "react": "^18.3.1",
+  "react-dom": "^18.3.1",
+  "@supabase/supabase-js": "^2.45.4",
+  "@supabase/ssr": "^0.5.1",
+  "tailwindcss": "^3.4.10",
+  "postcss": "^8.4.45",
+  "autoprefixer": "^10.4.20",
+  "clsx": "^2.1.1",
+  "tailwind-merge": "^2.5.2",
+  "lucide-react": "^0.439.0",
+  "zod": "^3.23.8",
+  "react-hook-form": "^7.53.0",
+  "@hookform/resolvers": "^3.9.0",
+  "@radix-ui/react-slot": "^1.1.0",
+  "@radix-ui/react-label": "^2.1.0",
+  "@radix-ui/react-toast": "^1.2.1",
+  "class-variance-authority": "^0.7.0"
+}
+```
+
+### Development Dependencies (`devDependencies`)
+```json
+{
+  "typescript": "^5.5.4",
+  "@types/node": "^20.16.5",
+  "@types/react": "^18.3.5",
+  "@types/react-dom": "^18.3.0",
+  "eslint": "^8.57.0",
+  "eslint-config-next": "^14.2.10",
+  "prettier": "^3.3.3",
+  "prettier-plugin-tailwindcss": "^0.6.6"
+}
+```
+
+---
+
+## 3. Files to be Created in Milestone 1
+
+| File Path | Purpose |
+| :--- | :--- |
+| `package.json` | Project scripts (`dev`, `build`, `start`, `lint`, `type-check`) and dependencies. |
+| `tsconfig.json` | TypeScript configuration with strict mode (`"strict": true`, `"noImplicitAny": true`, `"paths": { "@/*": ["./src/*"] }`). |
+| `tailwind.config.ts` | Theme tokens (`#4F46E5` primary, `#06B6D4` cyan, `#0F172A` background, `#1E293B` card, `#F8FAFC` text) & font family definitions. |
+| `postcss.config.mjs` | PostCSS Tailwind and Autoprefixer plugin configuration. |
+| `components.json` | shadcn/ui CLI configuration matching directory structure. |
+| `next.config.mjs` | Next.js configuration with security headers & strict mode. |
+| `.env.example` | Template defining `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. |
+| `.env.local` | Local environment variables for Supabase connectivity. |
+| `src/lib/utils.ts` | The canonical `cn()` utility combining `clsx` and `tailwind-merge`. |
+| `src/lib/supabase/client.ts` | Browser-side Supabase client using `@supabase/ssr` `createBrowserClient`. |
+| `src/lib/supabase/server.ts` | Server-side Supabase client using `@supabase/ssr` `createServerClient` and Next.js `cookies()`. |
+| `src/lib/supabase/middleware.ts` | Helper function for session refresh inside Next.js edge middleware. |
+| `src/lib/supabase/database.types.ts` | TypeScript types matching the database schema (`users`, `experiences`, `outcomes`, etc.). |
+| `src/lib/validations/auth.ts` | Zod validation schemas for registration, login, and username validation. |
+| `src/middleware.ts` | Next.js root middleware updating Supabase auth cookies on incoming requests. |
+| `src/types/api.ts` | Standardized API response wrappers (`ApiResponse<T>`, `ApiError`). |
+| `src/types/auth.ts` | TypeScript interfaces for User, Session, and Profile. |
+| `src/app/globals.css` | CSS variables, Tailwind directives, dark mode styling, and scrollbar rules. |
+| `src/app/layout.tsx` | Root layout importing Inter & JetBrains Mono fonts, setting responsive viewport. |
+| `src/app/(main)/layout.tsx` | App shell layout enforcing mobile-first container (360px–430px) + desktop responsiveness. |
+| `src/app/(main)/page.tsx` | Landing / status page validating that Next.js, Tailwind, and Supabase are operational. |
+| `src/app/api/v1/auth/callback/route.ts` | Supabase Auth code-exchange route handler for email confirmation & session setting. |
+| `src/components/ui/button.tsx` | Base shadcn/ui Button component with variants (primary, secondary, outline, ghost). |
+| `src/components/ui/card.tsx` | Base shadcn/ui Card component matching slate card aesthetics (`#1E293B`). |
+| `src/components/ui/input.tsx` | Base shadcn/ui Input component. |
+| `src/components/ui/label.tsx` | Base shadcn/ui Label component. |
+| `src/components/shared/Header.tsx` | Header bar with Eside typography and status badge. |
+| `src/components/shared/MobileBottomNav.tsx` | Fixed mobile bottom navigation with 5 icons (`Home`, `Search`, `Share`, `Insights`, `Profile`). |
+| `project-state.md` | Milestone progress tracking document. |
+| `knowledge/M1-foundation-and-auth-setup.md` | Milestone 1 learning guide and step-by-step rebuild manual for the project owner. |
+
+---
+
+## 4. Risks and Assumptions for Milestone 1
+
+### Assumptions
+1. **Node.js Environment**: Node.js v18.17+ or v20+ is installed and available locally.
+2. **Supabase Credentials**: A valid Supabase project URL and anon public key are available for `.env.local` to verify live authentication session exchanges.
+3. **Mobile First**: All UI components built in M1 are tested against 360px–430px mobile viewports first, adapting gracefully to desktop (up to 1200px max container).
+
+### Risks & Mitigations
+| Risk | Potential Impact | Mitigation Strategy |
+| :--- | :--- | :--- |
+| **Supabase SSR Cookie Synchronization** | In Next.js App Router, stale cookies in Server Components can cause session flicker or auth desync. | Use `@supabase/ssr` `createServerClient` with the latest cookie handling pattern (`getAll()` and `setAll()`), paired with `middleware.ts` to refresh tokens on every request. |
+| **Type Safety Gaps** | Implicit `any` types slip into API routes or Supabase clients violating Rule 5. | Configure `"noImplicitAny": true`, `"strict": true` in `tsconfig.json`, and define shared types in `src/types/` for all entities and API envelopes. |
+| **Styling Drift from Design Spec** | Inconsistent colors or font families. | Lock theme colors in `tailwind.config.ts` (`primary: #4F46E5`, `secondary: #06B6D4`, `bg: #0F172A`, `card: #1E293B`) and CSS variables in `globals.css`. |
+
+---
+
+## 5. Post-Milestone Documentation Plan
+
+Immediately upon completing Milestone 1 code execution and verification:
+1. **`project-state.md`**: Created with completed M1 status, current milestone (M2), database version, known issues, and deployment status.
+2. **`knowledge/M1-foundation-and-auth-setup.md`**: Generated with detailed breakdown of:
+   - What was built
+   - Why it was built
+   - Architecture decisions (e.g. Next.js App Router + @supabase/ssr cookie auth pattern)
+   - Alternatives considered
+   - Failure scenarios & common bugs (e.g. cookie mutation in Server Components vs Route Handlers)
+   - Files created
+   - Step-by-step instructions for the project owner to recreate Milestone 1 from scratch without AI.
+
+---
+
+## Verification Plan
+
+### Automated Checks
+- `npm run lint` — ESLint strict verification with no warnings.
+- `npx tsc --noEmit` — Strict TypeScript type-check ensuring zero `any` types.
+- `npm run build` — Next.js production build verification.
+
+### Manual Verification
+- Verify `http://localhost:3000` renders with dark background `#0F172A` and `#4F46E5` primary theme colors.
+- Verify Mobile Bottom Navigation renders on mobile viewport (360px–430px).
+- Verify Supabase SSR client properly initializes without runtime cookie errors.
