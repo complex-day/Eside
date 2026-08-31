@@ -4,6 +4,33 @@ All notable changes across development milestones are documented in this file.
 
 ---
 
+## [Milestone 5] - 2026-08-31
+
+### Added
+- **Outcome Timeline Engine**:
+  - `POST /api/v1/experiences/[id]/outcomes`: Author-only milestone creation endpoint supporting generic `days_after` (0–3650 days) and multi-paragraph reflections.
+  - `GET /api/v1/experiences/[id]/outcomes`: Public outcome milestone retrieval ordered chronologically (`days_after ASC, created_at ASC`).
+  - `src/components/outcomes/OutcomeTimeline.tsx`: Connected vertical progression visualizer starting from Day 0 baseline to sequential outcomes.
+  - `src/components/outcomes/OutcomeMilestoneCard.tsx`: Individual milestone card with Day label badge and relative timestamp.
+  - `src/components/outcomes/AddOutcomeModal.tsx`: Modal dialog for author to log milestone outcomes with preset shortcuts (30d, 90d, 180d, 1y) and custom day inputs.
+  - `src/lib/validations/outcome.ts`: Zod validation schemas for outcome creation and updates.
+- **Comments & Discussion Engine**:
+  - `GET /api/v1/experiences/[id]/comments`: Public discussion thread endpoint with author details join.
+  - `POST /api/v1/experiences/[id]/comments`: Authenticated comment submission with database sliding-window rate limiting.
+  - `PUT /api/v1/comments/[id]`: Inline comment editor for comment authors.
+  - `DELETE /api/v1/comments/[id]`: Deletion endpoint for comment authors.
+  - `src/components/comments/CommentSection.tsx`: Thread container managing live comment states.
+  - `src/components/comments/CommentCard.tsx`: Individual comment card with author avatar, username, author badge, relative timestamp, and inline edit/delete actions.
+  - `src/components/comments/CommentInput.tsx`: Comment submission input with character countdown and unauthenticated sign-in CTA.
+  - `src/lib/validations/comment.ts`: Zod validation schemas for comments.
+  - `src/lib/rate-limit.ts`: Added `checkCommentRateLimit` (20 comments/hr).
+- **Story Detail Integration**:
+  - `src/app/(main)/experiences/[id]/page.tsx`: Integrated `OutcomeTimeline` and `CommentSection` with concurrent `Promise.all` server-side data fetching.
+- **Documentation**:
+  - `knowledge/M5-outcomes-and-comments.md`: Comprehensive architecture and rebuild guide for Milestone 5.
+
+---
+
 ## [Milestone 4] - 2026-08-31
 
 ### Added

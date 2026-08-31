@@ -38,7 +38,7 @@ None
 | **M2** | Database Schema, RLS Policies & Seed Data | **Completed** | 2026-08-31 |
 | **M3** | Auth Integration & User Profiles | **Completed** | 2026-08-31 |
 | **M4** | Experiences Lifecycle, Category Filter & Discovery | **Completed** | 2026-08-31 |
-| **M5** | Outcome Timeline (30d, 90d, 180d) & Comments | Pending | - |
+| **M5** | Outcome Timeline (30d, 90d, 180d) & Comments | **Completed** | 2026-08-31 |
 | **M6** | Insights Dashboard, Content Reporting & Rate Limiting | Pending | - |
 | **M7** | Analytics Event Tracking, Performance Tuning & Polish | Pending | - |
 
@@ -93,13 +93,26 @@ None
 - **Documentation**:
   - `knowledge/M4-experiences-and-discovery.md` containing architecture decisions, state machine diagrams, failure scenarios, and learning topics for milestone rebuilding.
 
+### M5: Outcome Timeline & Comments Engine (Completed 2026-08-31)
+- **Outcome Timeline Visualizer & Milestone Tracking**:
+  - Generic integer milestone tracking (`days_after`: 0–3650 days) supporting quick presets (30d, 90d, 180d, 1y) and custom day offsets.
+  - Connected vertical timeline component (`OutcomeTimeline.tsx` + `OutcomeMilestoneCard.tsx`) starting at Day 0 baseline.
+  - Author-only milestone logging modal (`AddOutcomeModal.tsx`) with multi-paragraph reflection textarea (10–5000 chars).
+  - Chronological sorting guarantee (`ORDER BY days_after ASC, created_at ASC`).
+- **Comments & Discussion Engine**:
+  - Linear constructive discussion thread (`CommentSection.tsx` + `CommentCard.tsx` + `CommentInput.tsx`).
+  - Rate-limited comment submissions (20 comments/hour) via `src/lib/rate-limit.ts`.
+  - Full CRUD operations with author inline editing and soft-deletion (`deleted_at = NOW()`).
+- **Documentation**:
+  - `knowledge/M5-outcomes-and-comments.md` documenting architecture, security matrix, and rebuild guide.
+
 ---
 
-## Current Milestone Focus: M5
+## Current Milestone Focus: M6
 ### Goals:
-1. **Outcome Timeline Engine**:
-   - Interactive milestone update submission for Day 30, Day 90, and Day 180 outcomes.
-   - Chronological outcome visualizer cards attached to parent experiences.
-2. **Comment Threading & Discussion**:
-   - Comment submission form and threaded discussion cards under experiences.
-   - Rate limiting and author attribution.
+1. **Insights Aggregation Engine**:
+   - Outcome resolution ratio visualizer and category pattern insights.
+2. **Content Reporting & Moderation Engine**:
+   - Report submission modal for experiences and comments (`public.reports`).
+   - Automated rate limiting and abusive content flags per `moderation.md`.
+

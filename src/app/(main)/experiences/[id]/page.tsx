@@ -4,8 +4,12 @@ import { createClient } from "@/lib/supabase/server";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { TagBadge } from "@/components/shared/TagBadge";
 import { ExperienceDetailActions } from "@/components/shared/ExperienceDetailActions";
+import { OutcomeTimeline } from "@/components/outcomes/OutcomeTimeline";
+import { type OutcomeItem } from "@/components/outcomes/OutcomeMilestoneCard";
+import { CommentSection } from "@/components/comments/CommentSection";
+import { type CommentItem } from "@/components/comments/CommentCard";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Clock, Milestone } from "lucide-react";
+import { ArrowLeft, Clock } from "lucide-react";
 import { formatRelativeTime, formatFullDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -32,46 +36,72 @@ export default async function ExperienceDetailPage({ params }: ExperiencePagePro
     data: { user },
   } = await supabase.auth.getUser();
 
-  // 2. Fetch experience
-  const { data: exp, error } = await supabase
-    .from("experiences")
-    .select(
-      `
-      id,
-      title,
-      story,
-      status,
-      is_anonymous,
-      created_at,
-      updated_at,
-      deleted_at,
-      author_id,
-      category:categories (
+  // 2. Fetch experience, outcomes, and comments concurrently
+  const [expResult, outcomesResult, commentsResult] = await Promise.all([
+    supabase
+      .from("experiences")
+      .select(
+        `
         id,
-        name,
-        description
-      ),
-      author:users!experiences_author_id_fkey (
-        id,
-        username,
-        avatar_url,
-        bio
-      ),
-      experience_tags (
-        tag:tags (
+        title,
+        story,
+        status,
+        is_anonymous,
+        created_at,
+        updated_at,
+        deleted_at,
+        author_id,
+        category:categories (
           id,
-          name
+          name,
+          description
+        ),
+        author:users!experiences_author_id_fkey (
+          id,
+          username,
+          avatar_url,
+          bio
+        ),
+        experience_tags (
+          tag:tags (
+            id,
+            name
+          )
         )
-      ),
-      outcomes (
-        id
+      `
       )
-    `
-    )
-    .eq("id", id)
-    .maybeSingle();
+      .eq("id", id)
+      .maybeSingle(),
 
-  if (error || !exp) {
+    supabase
+      .from("outcomes")
+      .select("id, experience_id, days_after, content, created_at")
+      .eq("experience_id", id)
+      .order("days_after", { ascending: true })
+      .order("created_at", { ascending: true }),
+
+    supabase
+      .from("comments")
+      .select(
+        `
+        id,
+        experience_id,
+        content,
+        created_at,
+        updated_at,
+        author:users!comments_author_id_fkey (
+          id,
+          username,
+          avatar_url
+        )
+      `
+      )
+      .eq("experience_id", id)
+      .order("created_at", { ascending: true }),
+  ]);
+
+  const exp = expResult.data;
+  if (expResult.error || !exp) {
     notFound();
   }
 
@@ -104,7 +134,31 @@ export default async function ExperienceDetailPage({ params }: ExperiencePagePro
     .map((et) => et.tag?.name)
     .filter((t): t is string => Boolean(t));
 
-  const outcomesList = exp.outcomes ?? [];
+  const initialOutcomes: OutcomeItem[] = (outcomesResult.data ?? []).map((o) => ({
+    id: o.id,
+    experience_id: o.experience_id,
+    days_after: o.days_after,
+    content: o.content,
+    created_at: o.created_at,
+  }));
+
+  const initialComments: CommentItem[] = (commentsResult.data ?? []).map((c) => {
+    const commentAuthor = c.author;
+    return {
+      id: c.id,
+      experience_id: c.experience_id,
+      content: c.content,
+      author: {
+        id: commentAuthor?.id ?? "",
+        username: commentAuthor?.username ?? "Anonymous",
+        avatar_url: commentAuthor?.avatar_url ?? null,
+      },
+      is_author: user?.id === commentAuthor?.id,
+      is_story_author: exp.author_id === commentAuthor?.id,
+      created_at: c.created_at,
+      updated_at: c.updated_at,
+    };
+  });
 
   const relativeTime = formatRelativeTime(exp.created_at);
   const formattedFullDate = formatFullDate(exp.created_at);
@@ -209,18 +263,19 @@ export default async function ExperienceDetailPage({ params }: ExperiencePagePro
           </div>
         )}
 
-        {/* Outcome Milestones Badge Summary */}
-        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 sm:p-5 space-y-2">
-          <div className="flex items-center space-x-2 text-primary font-semibold text-xs sm:text-sm">
-            <Milestone className="h-4 w-4 shrink-0" />
-            <span>Outcome Progress ({outcomesList.length} Logged)</span>
-          </div>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            {outcomesList.length > 0
-              ? `This contributor has documented ${outcomesList.length} follow-up outcome milestone${outcomesList.length > 1 ? "s" : ""} on how this situation evolved.`
-              : "No follow-up outcomes have been documented for this experience yet."}
-          </p>
-        </div>
+        {/* Milestone 5: Outcome Timeline */}
+        <OutcomeTimeline
+          experienceId={exp.id}
+          initialOutcomes={initialOutcomes}
+          isAuthor={isAuthor}
+        />
+
+        {/* Milestone 5: Discussion & Comments Section */}
+        <CommentSection
+          experienceId={exp.id}
+          initialComments={initialComments}
+          isAuthenticated={Boolean(user)}
+        />
       </article>
     </div>
   );
