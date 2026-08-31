@@ -1,8 +1,3 @@
-/**
- * Supabase Database Schema Types for Eside (M2 - Milestone 2)
- * Strictly typed definitions matching docs/Database,.md and supabase/migrations
- */
-
 export type Json =
   | string
   | number
@@ -11,143 +6,152 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export type ExperienceStatus = 'active' | 'hidden' | 'reported' | 'deleted';
+export type ExperienceStatus = "active" | "hidden" | "reported" | "deleted";
 export type ReportReason =
-  | 'spam'
-  | 'harassment'
-  | 'hate_speech'
-  | 'misinformation'
-  | 'threats'
-  | 'privacy_violation'
-  | 'other';
-export type ReportStatus = 'pending' | 'reviewing' | 'resolved' | 'dismissed';
+  | "spam"
+  | "harassment"
+  | "hate_speech"
+  | "misinformation"
+  | "threats"
+  | "privacy_violation"
+  | "other";
+export type ReportStatus = "pending" | "reviewing" | "resolved" | "dismissed";
 export type OutcomeDays = 30 | 90 | 180;
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
-      users: {
+      analytics_events: {
         Row: {
-          id: string;
-          username: string;
-          avatar_url: string | null;
-          bio: string | null;
           created_at: string;
-          updated_at: string;
+          entity_id: string | null;
+          event_name: string;
+          id: string;
+          metadata: Json;
+          session_id: string | null;
+          user_id: string | null;
         };
         Insert: {
-          id: string;
-          username: string;
-          avatar_url?: string | null;
-          bio?: string | null;
           created_at?: string;
-          updated_at?: string;
+          entity_id?: string | null;
+          event_name: string;
+          id?: string;
+          metadata?: Json;
+          session_id?: string | null;
+          user_id?: string | null;
         };
         Update: {
-          id?: string;
-          username?: string;
-          avatar_url?: string | null;
-          bio?: string | null;
           created_at?: string;
-          updated_at?: string;
+          entity_id?: string | null;
+          event_name?: string;
+          id?: string;
+          metadata?: Json;
+          session_id?: string | null;
+          user_id?: string | null;
         };
         Relationships: [
           {
-            foreignKeyName: 'users_id_fkey';
-            columns: ['id'];
-            referencedRelation: 'users';
-            referencedColumns: ['id'];
+            foreignKeyName: "analytics_events_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      bookmarks: {
+        Row: {
+          created_at: string;
+          experience_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          experience_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          experience_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bookmarks_experience_id_fkey";
+            columns: ["experience_id"];
+            isOneToOne: false;
+            referencedRelation: "experiences";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bookmarks_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
           }
         ];
       };
       categories: {
         Row: {
-          id: string;
-          name: string;
+          created_at: string;
           description: string | null;
-          created_at: string;
+          id: string;
+          name: string;
         };
         Insert: {
+          created_at?: string;
+          description?: string | null;
           id?: string;
           name: string;
-          description?: string | null;
-          created_at?: string;
         };
         Update: {
+          created_at?: string;
+          description?: string | null;
           id?: string;
           name?: string;
-          description?: string | null;
-          created_at?: string;
         };
         Relationships: [];
       };
-      tags: {
+      comments: {
         Row: {
-          id: string;
-          name: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
-      experiences: {
-        Row: {
-          id: string;
           author_id: string;
-          category_id: string;
-          title: string;
-          story: string;
-          is_anonymous: boolean;
-          status: ExperienceStatus;
+          content: string;
           created_at: string;
+          experience_id: string;
+          id: string;
           updated_at: string;
-          deleted_at: string | null;
         };
         Insert: {
-          id?: string;
           author_id: string;
-          category_id: string;
-          title: string;
-          story: string;
-          is_anonymous?: boolean;
-          status?: ExperienceStatus;
+          content: string;
           created_at?: string;
+          experience_id: string;
+          id?: string;
           updated_at?: string;
-          deleted_at?: string | null;
         };
         Update: {
-          id?: string;
           author_id?: string;
-          category_id?: string;
-          title?: string;
-          story?: string;
-          is_anonymous?: boolean;
-          status?: ExperienceStatus;
+          content?: string;
           created_at?: string;
+          experience_id?: string;
+          id?: string;
           updated_at?: string;
-          deleted_at?: string | null;
         };
         Relationships: [
           {
-            foreignKeyName: 'experiences_author_id_fkey';
-            columns: ['author_id'];
-            referencedRelation: 'users';
-            referencedColumns: ['id'];
+            foreignKeyName: "comments_author_id_fkey";
+            columns: ["author_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: 'experiences_category_id_fkey';
-            columns: ['category_id'];
-            referencedRelation: 'categories';
-            referencedColumns: ['id'];
+            foreignKeyName: "comments_experience_id_fkey";
+            columns: ["experience_id"];
+            isOneToOne: false;
+            referencedRelation: "experiences";
+            referencedColumns: ["id"];
           }
         ];
       };
@@ -166,206 +170,203 @@ export interface Database {
         };
         Relationships: [
           {
-            foreignKeyName: 'experience_tags_experience_id_fkey';
-            columns: ['experience_id'];
-            referencedRelation: 'experiences';
-            referencedColumns: ['id'];
+            foreignKeyName: "experience_tags_experience_id_fkey";
+            columns: ["experience_id"];
+            isOneToOne: false;
+            referencedRelation: "experiences";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: 'experience_tags_tag_id_fkey';
-            columns: ['tag_id'];
-            referencedRelation: 'tags';
-            referencedColumns: ['id'];
+            foreignKeyName: "experience_tags_tag_id_fkey";
+            columns: ["tag_id"];
+            isOneToOne: false;
+            referencedRelation: "tags";
+            referencedColumns: ["id"];
           }
         ];
       };
-      comments: {
+      experiences: {
         Row: {
-          id: string;
-          experience_id: string;
           author_id: string;
-          content: string;
+          category_id: string;
           created_at: string;
+          deleted_at: string | null;
+          id: string;
+          is_anonymous: boolean;
+          status: string;
+          story: string;
+          title: string;
           updated_at: string;
         };
         Insert: {
-          id?: string;
-          experience_id: string;
           author_id: string;
-          content: string;
+          category_id: string;
           created_at?: string;
+          deleted_at?: string | null;
+          id?: string;
+          is_anonymous?: boolean;
+          status?: string;
+          story: string;
+          title: string;
           updated_at?: string;
         };
         Update: {
-          id?: string;
-          experience_id?: string;
           author_id?: string;
-          content?: string;
+          category_id?: string;
           created_at?: string;
+          deleted_at?: string | null;
+          id?: string;
+          is_anonymous?: boolean;
+          status?: string;
+          story?: string;
+          title?: string;
           updated_at?: string;
         };
         Relationships: [
           {
-            foreignKeyName: 'comments_experience_id_fkey';
-            columns: ['experience_id'];
-            referencedRelation: 'experiences';
-            referencedColumns: ['id'];
+            foreignKeyName: "experiences_author_id_fkey";
+            columns: ["author_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: 'comments_author_id_fkey';
-            columns: ['author_id'];
-            referencedRelation: 'users';
-            referencedColumns: ['id'];
+            foreignKeyName: "experiences_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
           }
         ];
       };
       outcomes: {
         Row: {
-          id: string;
-          experience_id: string;
-          days_after: OutcomeDays;
           content: string;
           created_at: string;
+          days_after: number;
+          experience_id: string;
+          id: string;
         };
         Insert: {
-          id?: string;
-          experience_id: string;
-          days_after: OutcomeDays;
           content: string;
           created_at?: string;
+          days_after: number;
+          experience_id: string;
+          id?: string;
         };
         Update: {
-          id?: string;
-          experience_id?: string;
-          days_after?: OutcomeDays;
           content?: string;
           created_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'outcomes_experience_id_fkey';
-            columns: ['experience_id'];
-            referencedRelation: 'experiences';
-            referencedColumns: ['id'];
-          }
-        ];
-      };
-      bookmarks: {
-        Row: {
-          user_id: string;
-          experience_id: string;
-          created_at: string;
-        };
-        Insert: {
-          user_id: string;
-          experience_id: string;
-          created_at?: string;
-        };
-        Update: {
-          user_id?: string;
+          days_after?: number;
           experience_id?: string;
-          created_at?: string;
+          id?: string;
         };
         Relationships: [
           {
-            foreignKeyName: 'bookmarks_user_id_fkey';
-            columns: ['user_id'];
-            referencedRelation: 'users';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'bookmarks_experience_id_fkey';
-            columns: ['experience_id'];
-            referencedRelation: 'experiences';
-            referencedColumns: ['id'];
+            foreignKeyName: "outcomes_experience_id_fkey";
+            columns: ["experience_id"];
+            isOneToOne: false;
+            referencedRelation: "experiences";
+            referencedColumns: ["id"];
           }
         ];
       };
       reports: {
         Row: {
-          id: string;
-          reporter_id: string | null;
-          experience_id: string | null;
           comment_id: string | null;
-          reason: ReportReason;
-          status: ReportStatus;
           created_at: string;
+          experience_id: string | null;
+          id: string;
+          reason: string;
+          reporter_id: string | null;
+          status: string;
         };
         Insert: {
-          id?: string;
-          reporter_id?: string | null;
-          experience_id?: string | null;
           comment_id?: string | null;
-          reason: ReportReason;
-          status?: ReportStatus;
           created_at?: string;
+          experience_id?: string | null;
+          id?: string;
+          reason: string;
+          reporter_id?: string | null;
+          status?: string;
         };
         Update: {
-          id?: string;
-          reporter_id?: string | null;
-          experience_id?: string | null;
           comment_id?: string | null;
-          reason?: ReportReason;
-          status?: ReportStatus;
           created_at?: string;
+          experience_id?: string | null;
+          id?: string;
+          reason?: string;
+          reporter_id?: string | null;
+          status?: string;
         };
         Relationships: [
           {
-            foreignKeyName: 'reports_reporter_id_fkey';
-            columns: ['reporter_id'];
-            referencedRelation: 'users';
-            referencedColumns: ['id'];
+            foreignKeyName: "reports_comment_id_fkey";
+            columns: ["comment_id"];
+            isOneToOne: false;
+            referencedRelation: "comments";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: 'reports_experience_id_fkey';
-            columns: ['experience_id'];
-            referencedRelation: 'experiences';
-            referencedColumns: ['id'];
+            foreignKeyName: "reports_experience_id_fkey";
+            columns: ["experience_id"];
+            isOneToOne: false;
+            referencedRelation: "experiences";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: 'reports_comment_id_fkey';
-            columns: ['comment_id'];
-            referencedRelation: 'comments';
-            referencedColumns: ['id'];
+            foreignKeyName: "reports_reporter_id_fkey";
+            columns: ["reporter_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
           }
         ];
       };
-      analytics_events: {
+      tags: {
         Row: {
-          id: string;
-          user_id: string | null;
-          session_id: string | null;
-          event_name: string;
-          entity_id: string | null;
-          metadata: Json;
           created_at: string;
+          id: string;
+          name: string;
         };
         Insert: {
-          id?: string;
-          user_id?: string | null;
-          session_id?: string | null;
-          event_name: string;
-          entity_id?: string | null;
-          metadata?: Json;
           created_at?: string;
+          id?: string;
+          name: string;
         };
         Update: {
-          id?: string;
-          user_id?: string | null;
-          session_id?: string | null;
-          event_name?: string;
-          entity_id?: string | null;
-          metadata?: Json;
           created_at?: string;
+          id?: string;
+          name?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: 'analytics_events_user_id_fkey';
-            columns: ['user_id'];
-            referencedRelation: 'users';
-            referencedColumns: ['id'];
-          }
-        ];
+        Relationships: [];
+      };
+      users: {
+        Row: {
+          avatar_url: string | null;
+          bio: string | null;
+          created_at: string;
+          id: string;
+          updated_at: string;
+          username: string;
+        };
+        Insert: {
+          avatar_url?: string | null;
+          bio?: string | null;
+          created_at?: string;
+          id: string;
+          updated_at?: string;
+          username: string;
+        };
+        Update: {
+          avatar_url?: string | null;
+          bio?: string | null;
+          created_at?: string;
+          id?: string;
+          updated_at?: string;
+          username?: string;
+        };
+        Relationships: [];
       };
     };
     Views: {
@@ -381,4 +382,71 @@ export interface Database {
       [_ in never]: never;
     };
   };
-}
+};
+
+export type Tables<
+  PublicTableNameOrOptions extends
+    | keyof (Database["public"]["Tables"] & Database["public"]["Views"])
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+        Database[PublicTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
+      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R;
+    }
+    ? R
+    : never
+  : PublicTableNameOrOptions extends keyof (Database["public"]["Tables"] &
+        Database["public"]["Views"])
+    ? (Database["public"]["Tables"] &
+        Database["public"]["Views"])[PublicTableNameOrOptions] extends {
+        Row: infer R;
+      }
+      ? R
+      : never
+    : never;
+
+export type TablesInsert<
+  PublicTableNameOrOptions extends
+    | keyof Database["public"]["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I;
+    }
+    ? I
+    : never
+  : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
+    ? Database["public"]["Tables"][PublicTableNameOrOptions] extends {
+        Insert: infer I;
+      }
+      ? I
+      : never
+    : never;
+
+export type TablesUpdate<
+  PublicTableNameOrOptions extends
+    | keyof Database["public"]["Tables"]
+    | { schema: keyof Database },
+  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
+    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = PublicTableNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U;
+    }
+    ? U
+    : never
+  : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
+    ? Database["public"]["Tables"][PublicTableNameOrOptions] extends {
+        Update: infer U;
+      }
+      ? U
+      : never
+    : never;

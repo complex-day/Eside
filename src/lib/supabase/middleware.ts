@@ -2,8 +2,11 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/lib/supabase/database.types";
 
+const PROTECTED_ROUTES = ["/profile", "/experiences/new", "/bookmarks"];
+const AUTH_ROUTES = ["/login", "/register", "/verify-email"];
+
 /**
- * Refreshes Supabase session tokens in Next.js middleware.
+ * Refreshes Supabase session tokens in Next.js middleware and applies route guards.
  * Ensures the authenticated session is always up to date across requests.
  */
 export async function updateSession(request: NextRequest) {
@@ -34,7 +37,26 @@ export async function updateSession(request: NextRequest) {
   });
 
   // Refresh auth token if expired
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const pathname = request.nextUrl.pathname;
+
+  // 1. If accessing a protected route without a valid session: Redirect to /login
+  const isProtected = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
+  if (isProtected && !user) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("next", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // 2. If accessing an auth route while already authenticated: Redirect to /
+  const isAuthRoute = AUTH_ROUTES.some((route) => pathname === route);
+  if (isAuthRoute && user) {
+    const homeUrl = new URL("/", request.url);
+    return NextResponse.redirect(homeUrl);
+  }
 
   return supabaseResponse;
 }

@@ -11,19 +11,30 @@ export default async function MainLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const metadata = user?.user_metadata as Record<string, unknown> | undefined;
-  const rawUsername = metadata?.["username"];
-  const username = typeof rawUsername === "string" ? rawUsername : undefined;
+  let sessionUser = null;
 
-  const sessionUser = user
-    ? {
-        email: user.email,
-        username,
-      }
-    : null;
+  if (user) {
+    // Try to load canonical profile from public.users
+    const { data: profile } = await supabase
+      .from("users")
+      .select("id, username, avatar_url")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const metadata = user.user_metadata as Record<string, unknown> | undefined;
+    const fallbackUsername =
+      typeof metadata?.["username"] === "string" ? metadata["username"] : "anonymous";
+
+    sessionUser = {
+      id: user.id,
+      email: user.email,
+      username: profile?.username || fallbackUsername,
+      avatar_url: profile?.avatar_url,
+    };
+  }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
       <Header user={sessionUser} />
       <main className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 pb-20 sm:pb-8">
         {children}
