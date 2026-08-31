@@ -13,7 +13,6 @@ import {
   FileText,
   Clock,
   Archive,
-  PlusCircle,
   Compass,
 } from "lucide-react";
 
@@ -21,6 +20,8 @@ export const metadata = {
   title: "My Profile — Eside",
   description: "Manage your anonymous profile, experiences, outcomes, and bookmarks.",
 };
+
+export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -104,7 +105,8 @@ export default async function ProfilePage() {
       .from("experiences")
       .select("id, title, story, created_at")
       .in("id", bookmarkedExpIds)
-      .eq("status", "active");
+      .eq("status", "active")
+      .is("deleted_at", null);
     bookmarkedExperiences = bExpData || [];
   }
 
@@ -168,31 +170,33 @@ export default async function ProfilePage() {
               icon={<FileText className="h-8 w-8 text-muted-foreground" />}
               title="No published experiences yet"
               description="Share a real incident, struggle, or decision to help others learn from your journey."
-              actionHref="/"
-              actionLabel="Explore Feed"
+              actionHref="/experiences/new"
+              actionLabel="Share Experience"
             />
           ) : (
             published.map((exp) => (
-              <Card key={exp.id} className="border-border bg-surface-card hover:border-slate-700 transition-colors">
-                <CardHeader className="p-4 pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-semibold text-foreground">
-                      {exp.title}
-                    </CardTitle>
-                    <Badge variant="active" className="text-[10px]">
-                      Active
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                    {exp.story}
-                  </p>
-                  <span className="text-[10px] text-slate-500 mt-2 block">
-                    Posted on {new Date(exp.created_at).toLocaleDateString()}
-                  </span>
-                </CardContent>
-              </Card>
+              <Link key={exp.id} href={`/experiences/${exp.id}`} className="block group">
+                <Card className="border-border bg-surface-card hover:border-primary/40 transition-colors">
+                  <CardHeader className="p-4 pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                        {exp.title}
+                      </CardTitle>
+                      <Badge variant="active" className="text-[10px]">
+                        Active
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                      {exp.story}
+                    </p>
+                    <span className="text-[10px] text-slate-500 mt-2 block">
+                      Posted on {new Date(exp.created_at).toLocaleDateString()}
+                    </span>
+                  </CardContent>
+                </Card>
+              </Link>
             ))
           )}
         </TabsContent>
@@ -204,26 +208,33 @@ export default async function ProfilePage() {
               icon={<Clock className="h-8 w-8 text-muted-foreground" />}
               title="No drafts saved"
               description="Drafts you save privately will appear here."
+              actionHref="/experiences/new"
+              actionLabel="Create Draft"
             />
           ) : (
             drafts.map((exp) => (
-              <Card key={exp.id} className="border-border bg-surface-card">
-                <CardHeader className="p-4 pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-semibold text-foreground">
-                      {exp.title}
-                    </CardTitle>
-                    <Badge variant="draft" className="text-[10px]">
-                      Draft
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                    {exp.story}
-                  </p>
-                </CardContent>
-              </Card>
+              <Link key={exp.id} href={`/experiences/${exp.id}/edit`} className="block group">
+                <Card className="border-border bg-surface-card hover:border-primary/40 transition-colors">
+                  <CardHeader className="p-4 pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                        {exp.title}
+                      </CardTitle>
+                      <Badge variant="draft" className="text-[10px]">
+                        Draft
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                      {exp.story}
+                    </p>
+                    <span className="text-[10px] text-primary mt-2 block font-medium">
+                      Click to edit or publish draft →
+                    </span>
+                  </CardContent>
+                </Card>
+              </Link>
             ))
           )}
         </TabsContent>
@@ -298,22 +309,24 @@ export default async function ProfilePage() {
               title="No saved bookmarks"
               description="Bookmark experiences as you browse to quickly reference them later."
               actionHref="/"
-              actionLabel="Browse Experiences"
+              actionLabel="Explore Experiences"
             />
           ) : (
             bookmarkedExperiences.map((bExp) => (
-              <Card key={bExp.id} className="border-border bg-surface-card hover:border-slate-700 transition-colors">
-                <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-sm font-semibold text-foreground">
-                    {bExp.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {bExp.story}
-                  </p>
-                </CardContent>
-              </Card>
+              <Link key={bExp.id} href={`/experiences/${bExp.id}`} className="block group">
+                <Card className="border-border bg-surface-card hover:border-primary/40 transition-colors">
+                  <CardHeader className="p-4 pb-2">
+                    <CardTitle className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                      {bExp.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                      {bExp.story}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
             ))
           )}
         </TabsContent>
@@ -336,16 +349,15 @@ function EmptyState({
   actionLabel?: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center p-8 text-center rounded-lg border border-dashed border-border bg-surface-card/40 space-y-3">
-      <div className="p-2.5 rounded-full bg-slate-800/80">{icon}</div>
+    <div className="rounded-xl border border-dashed border-border p-8 text-center space-y-3 bg-surface-card/50">
+      <div className="flex justify-center">{icon}</div>
       <div className="space-y-1">
         <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-        <p className="text-xs text-muted-foreground max-w-sm">{description}</p>
+        <p className="text-xs text-muted-foreground max-w-sm mx-auto">{description}</p>
       </div>
       {actionHref && actionLabel && (
-        <Link href={actionHref} className="pt-1">
-          <Button variant="outline" size="sm" className="h-8 text-xs">
-            <PlusCircle className="mr-1.5 h-3.5 w-3.5" />
+        <Link href={actionHref} className="inline-block pt-1">
+          <Button variant="outline" size="sm" className="h-8 text-xs font-medium">
             {actionLabel}
           </Button>
         </Link>

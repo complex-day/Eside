@@ -3,7 +3,7 @@
 ## Project Overview
 - **Project Name**: Eside
 - **Architecture**: Monolithic Next.js (App Router) + Supabase (PostgreSQL) + Tailwind CSS + shadcn/ui
-- **Current Milestone**: M4 — Experiences Lifecycle, Category Filter & Discovery
+- **Current Milestone**: M4 — Experiences Lifecycle, Category Filter & Discovery (Completed & Verified)
 - **Repository**: [https://github.com/complex-day/Eside.git](https://github.com/complex-day/Eside.git)
 
 ---
@@ -13,7 +13,8 @@
 ## Completed
 - M1 Foundation & Auth Setup
 - M2 Database Schema, RLS Policies & Seed Data
-- M3 Auth Integration & User Profiles (Approved & Verified)
+- M3 Auth Integration & User Profiles
+- M4 Experiences Lifecycle, Category Filter & Discovery
 
 ## Current Milestone
 M4 — Experiences Lifecycle, Category Filter & Discovery
@@ -35,8 +36,8 @@ None
 | :--- | :--- | :--- | :--- |
 | **M1** | Foundation & Auth Setup | **Completed** | 2026-08-30 |
 | **M2** | Database Schema, RLS Policies & Seed Data | **Completed** | 2026-08-31 |
-| **M3** | Auth Integration & User Profiles | **Approved** | 2026-08-31 |
-| **M4** | Experiences Lifecycle, Category Filter & Discovery | **In Progress** | Current |
+| **M3** | Auth Integration & User Profiles | **Completed** | 2026-08-31 |
+| **M4** | Experiences Lifecycle, Category Filter & Discovery | **Completed** | 2026-08-31 |
 | **M5** | Outcome Timeline (30d, 90d, 180d) & Comments | Pending | - |
 | **M6** | Insights Dashboard, Content Reporting & Rate Limiting | Pending | - |
 | **M7** | Analytics Event Tracking, Performance Tuning & Polish | Pending | - |
@@ -65,7 +66,7 @@ None
 - Deterministic atomic rollback script (`supabase/migrations/00000_down_all.sql`).
 - Architecture Decision Records (`ADR-001` through `ADR-004`), API contract (`docs/api-contract.md`), and Contributor guide (`docs/contributor-guide.md`).
 
-### M3: Auth Integration & User Profiles (Approved 2026-08-31)
+### M3: Auth Integration & User Profiles (Completed 2026-08-31)
 - End-to-end authentication lifecycle (`POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/callback`).
 - Case-insensitive username collision handling mapping PostgreSQL error `23505` to `409 Conflict`.
 - Reserved username validation blocking `admin`, `moderator`, `support`, `official`, `system`, `root`, `eside`.
@@ -76,19 +77,29 @@ None
 - Public anonymous author view (`/u/[username]`) isolating published experiences from private drafts.
 - Deterministic gradient anonymous avatar component (`UserAvatar.tsx`) and dynamic navigation header.
 - Module augmentation (`src/types/supabase-ssr.d.ts`) resolving upstream 5-parameter generic arity for `@supabase/ssr` with zero `any`, zero `@ts-ignore`, and zero type assertions.
-- 100% build validation passing (`npm run type-check`, `npm run lint`, `npm run build`).
+
+### M4: Experiences Lifecycle, Category Filter & Discovery (Completed 2026-08-31)
+- **Experience Submission & State Machine**:
+  - `/experiences/new` creation interface with Title, Story Narrative, Category selector, Tag input, and Publish (`active`) vs. Save as Draft (`hidden`) actions.
+  - `/experiences/[id]/edit` author editing page with soft-delete/archive action (`status = 'deleted'`, `deleted_at = NOW()`).
+  - Database-backed sliding-window rate limiter enforcing max 10 submissions/hour per authenticated user (`src/lib/rate-limit.ts`).
+- **Public Feed & Discovery Engine**:
+  - `/` public feed with category horizontal pill switcher (`CategoryFilter`), tag pills (`TagBadge`), sub-500ms partial index queries, and accessible pagination (`PaginationControls`).
+  - Deep-linkable query parameter filtering (`/?category=slug`, `/?tag=slug`).
+  - Rich `ExperienceCard` preview cards with author avatar, username, category pill, story excerpt, tags, outcome badge, and relative timestamps.
+- **Story Detail & Bookmarking**:
+  - `/experiences/[id]` full narrative story reader with whitespace formatting, author header, tag list, and outcome progress badge indicator.
+  - Lightweight bookmarking toggle API (`POST /api/v1/bookmarks`) and interactive `BookmarkButton` on feed cards and detail views.
+- **Documentation**:
+  - `knowledge/M4-experiences-and-discovery.md` containing architecture decisions, state machine diagrams, failure scenarios, and learning topics for milestone rebuilding.
 
 ---
 
-## Current Milestone Focus: M4
+## Current Milestone Focus: M5
 ### Goals:
-1. **Experience Creation Lifecycle**:
-   - Rich experience submission form (`/experiences/new`) with title, story, category selector, and tag input.
-   - Status management: Publish (`active`) or Save as Draft (`hidden`).
-   - Server-side validation and rate limiting (10 posts/hr).
-2. **Experience Feed & Discovery**:
-   - Paginated public feed with sorting (`latest`, `outcomes`).
-   - Category filtering (Education, Career, Finance, etc.) with sub-300ms index support.
-   - Tag exploration and experience preview cards.
-3. **Experience Detail View**:
-   - Full story display (`/experiences/[id]`) with author badge, category pill, and outcome timeline teaser.
+1. **Outcome Timeline Engine**:
+   - Interactive milestone update submission for Day 30, Day 90, and Day 180 outcomes.
+   - Chronological outcome visualizer cards attached to parent experiences.
+2. **Comment Threading & Discussion**:
+   - Comment submission form and threaded discussion cards under experiences.
+   - Rate limiting and author attribution.

@@ -1,9 +1,12 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, FileText, Compass } from "lucide-react";
+import { Calendar, FileText, Milestone } from "lucide-react";
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -37,32 +40,13 @@ export default async function PublicUserProfilePage({
   // 2. Fetch public active experiences
   const { data: experiences } = await supabase
     .from("experiences")
-    .select("id, title, story, created_at")
+    .select("id, title, story, created_at, outcomes (id)")
     .eq("author_id", userProfile.id)
     .eq("status", "active")
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
   const published = experiences || [];
-
-  // 3. Fetch outcomes
-  const expIds = published.map((e) => e.id);
-  let outcomes: Array<{
-    id: string;
-    experience_id: string;
-    days_after: number;
-    content: string;
-    created_at: string;
-  }> = [];
-
-  if (expIds.length > 0) {
-    const { data: outcomesData } = await supabase
-      .from("outcomes")
-      .select("id, experience_id, days_after, content, created_at")
-      .in("experience_id", expIds)
-      .order("days_after", { ascending: true });
-    outcomes = outcomesData || [];
-  }
 
   const joinedDate = new Date(userProfile.created_at).toLocaleDateString("en-US", {
     month: "short",
@@ -112,47 +96,34 @@ export default async function PublicUserProfilePage({
           </Card>
         ) : (
           published.map((exp) => {
-            const expOutcomes = outcomes.filter((o) => o.experience_id === exp.id);
+            const outcomesList = (exp.outcomes || []) as Array<{ id: string }>;
 
             return (
-              <Card
-                key={exp.id}
-                className="border-border bg-surface-card hover:border-slate-700 transition-colors"
-              >
-                <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-sm font-semibold text-foreground">
-                    {exp.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0 space-y-3">
-                  <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
-                    {exp.story}
-                  </p>
-
-                  {/* Outcome timeline preview */}
-                  {expOutcomes.length > 0 && (
-                    <div className="pt-2 border-t border-border/50 space-y-1.5">
-                      <span className="text-[10px] font-bold text-primary flex items-center">
-                        <Compass className="mr-1 h-3 w-3" />
-                        Outcome Timeline Updates:
-                      </span>
-                      {expOutcomes.map((out) => (
-                        <div
-                          key={out.id}
-                          className="text-[11px] bg-slate-900/60 p-2 rounded border border-slate-800 text-slate-300"
-                        >
-                          <span className="font-semibold text-primary">Day {out.days_after}:</span>{" "}
-                          {out.content}
-                        </div>
-                      ))}
+              <Link key={exp.id} href={`/experiences/${exp.id}`} className="block group">
+                <Card className="border-border bg-surface-card hover:border-primary/40 transition-colors">
+                  <CardHeader className="p-4 pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                        {exp.title}
+                      </CardTitle>
+                      {outcomesList.length > 0 && (
+                        <span className="inline-flex items-center space-x-1 text-emerald-400 font-medium text-[10px]">
+                          <Milestone className="h-3 w-3" />
+                          <span>{outcomesList.length} Outcome{outcomesList.length > 1 ? "s" : ""}</span>
+                        </span>
+                      )}
                     </div>
-                  )}
-
-                  <span className="text-[10px] text-slate-500 block pt-1">
-                    Posted on {new Date(exp.created_at).toLocaleDateString()}
-                  </span>
-                </CardContent>
-              </Card>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0 space-y-2">
+                    <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+                      {exp.story}
+                    </p>
+                    <span className="text-[10px] text-muted-foreground/80 block">
+                      Published {new Date(exp.created_at).toLocaleDateString()}
+                    </span>
+                  </CardContent>
+                </Card>
+              </Link>
             );
           })
         )}

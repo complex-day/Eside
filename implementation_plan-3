@@ -1,0 +1,255 @@
+# Milestone 4: Experiences Lifecycle, Category Filter & Discovery — Revised Architecture & PRD
+
+---
+
+## 1. Executive Summary & Core Decisions
+
+This specification integrates all architectural decisions for Milestone 4:
+
+1. **Experience Lifecycle State Machine**:
+   - **States**: `hidden` (Draft), `active` (Published), `deleted` (Archived / Soft-deleted).
+   - **Transitions**:
+     - `Draft (hidden) → Published (active)`: Allowed at any time.
+     - `Published (active) → Draft (hidden)`: Allowed (unpublish story).
+     - `Published (active) → Archived (deleted)`: Allowed (sets `deleted_at = NOW()`).
+     - `Draft (hidden) → Archived (deleted)`: Allowed (discard draft).
+     - `Archived (deleted)` is an immutable terminal state for users (read-only in author's profile, cannot be unarchived in MVP).
+2. **Tag Lifecycle**:
+   - Auto-created if not already present in `public.tags` via `ON CONFLICT (name) DO NOTHING`.
+   - Input tags are automatically deduplicated and normalized (`trim`, `toLowerCase`, `^[a-z0-9-_]{2,30}$`).
+   - Hard cap of **5 tags** per experience.
+3. **`sort=outcomes` Ranking**:
+   - Deterministic SQL ordering: `outcomes_count DESC, created_at DESC`. Experiences with documented outcomes appear first.
+4. **Rate Limiting Architecture**:
+   - **Database-backed sliding window**: `SELECT COUNT(*) FROM experiences WHERE author_id = :uid AND created_at > NOW() - INTERVAL '1 hour'`.
+   - Max 10 posts/hour per user. Zero external dependencies (no Redis required for MVP).
+5. **Bookmark Scope Included**:
+   - Complete `POST /api/v1/bookmarks` toggle endpoint and UI button on `ExperienceCard` and `/experiences/[id]`, connecting seamlessly to the Profile Dashboard bookmarks tab.
+
+---
+
+## 2. Final M4 Product Requirements Document (PRD)
+
+### User Personas & Flows
+
+```text
+[Visitor / Member] ───► Public Feed (/) ───► Category Filter (/category/[slug])
+                                │
+                                ├──► Experience Detail (/experiences/[id])
+                                │         ├── Outcome Timeline View (30d / 90d / 180d)
+                                │         └── Bookmark Toggle (Member Only)
+                                │
+[Authenticated Author] ─► Create Form (/experiences/new)
+                                │
+                                ├── Save as Draft (status: hidden)
+                                └── Publish (status: active)
+                                        │
+                                        └── Edit / Archive (/experiences/[id]/edit)
+```
+
+### Detailed User Stories & Acceptance Criteria
+
+#### US-4.1: Experience Creation (Draft & Publish)
+- **Actor**: Authenticated User.
+- **Form Fields**:
+  - `title`: String, 3–150 characters, required.
+  - `story`: Text, 10–10,000 characters, required.
+  - `category_id`: UUID, required (must exist in `categories`).
+  - `tags`: Array of strings (0–5 items, 2–30 characters each).
+  - `action`: `publish` (sets `status = 'active'`) or `draft` (sets `status = 'hidden'`).
+- **Validation**: Strict server-side Zod validation + database foreign key constraints.
+- **Rate Limit**: Max 10 creations/hour. Returns `429 RATE_LIMITED` on breach.
+
+#### US-4.2: Experience Lifecycle & Author Controls
+- **Actor**: Authenticated Experience Author (`auth.uid() = author_id`).
+- **Actions**:
+  - **Edit Story**: Update title, story narrative, category, and tags at `/experiences/[id]/edit`.
+  - **Toggle Publish/Draft**: Switch between `active` and `hidden`.
+  - **Soft Delete / Archive**: Sets `status = 'deleted'` and `deleted_at = NOW()`.
+- **Security**: Non-authors attempting PUT or DELETE receive `403 FORBIDDEN`.
+
+#### US-4.3: Public Feed & Discovery
+- **Actor**: All users (Visitor & Member).
+- **Feed Rendering**:
+  - Queries `experiences` where `status = 'active' AND deleted_at IS NULL`.
+  - Displays `ExperienceCard` components with author username, gradient avatar, category pill, story excerpt (3 lines clamp), outcome count pill, comment count, and relative timestamp (`e.g. 2 hours ago`).
+- **Pagination**: 10 items per page with Next/Prev and page counter.
+
+#### US-4.4: Category & Tag Filtering
+- **Actor**: All users.
+- **Category Filter Bar**:
+  - Horizontal scrolling category pills on mobile and desktop: `All`, `Education`, `Career`, `Finance`, `Health`, `Relationships`, `Mindset`, `Relocation`, `Miscellaneous`.
+  - Deep-linkable routes (`/?category=career` or `/category/career`).
+  - Response time target: $< 300\text{ms}$.
+- **Tag Filtering**:
+  - Clicking any tag badge filters feed by `?tag=slug`.
+
+#### US-4.5: Experience Detail & Outcome Milestones
+- **Actor**: All users.
+- **Content**:
+  - Formatted multi-paragraph story rendering with typography polish.
+  - Author header with link to `/u/[username]`.
+  - Category pill and tag list.
+  - **Outcome Timeline**: Chronological display of milestone updates (30 Days, 90 Days, 180 Days) with milestone badges.
+  - Bookmark toggle button (with immediate UI feedback).
+  - Author edit/delete button (visible only to story author).
+
+#### US-4.6: Bookmarking System
+- **Actor**: Authenticated User.
+- **Behavior**:
+  - Clicking bookmark icon toggles bookmark status (`POST /api/v1/bookmarks`).
+  - Bookmarked stories immediately sync to the user's `/profile` (Bookmarks tab).
+
+---
+
+## 3. Final M4 System Design Document
+
+### Component Tree & Routing Architecture
+
+```text
+src/
+├── app/
+│   ├── (main)/
+│   │   ├── page.tsx                           # Main Feed with CategoryFilter & ExperienceCard list
+│   │   ├── category/
+│   │   │   └── [slug]/page.tsx                # Category dedicated feed
+│   │   └── experiences/
+│   │       ├── new/page.tsx                   # Submission form (Draft / Publish)
+│   │       └── [id]/
+│   │           ├── page.tsx                   # Story Detail + Outcome Timeline + Bookmark
+│   │           └── edit/page.tsx              # Author Edit & Archive interface
+│   └── api/
+│       └── v1/
+│           ├── categories/route.ts            # GET /api/v1/categories
+│           ├── tags/route.ts                  # GET /api/v1/tags
+│           ├── bookmarks/route.ts             # POST /api/v1/bookmarks (Toggle)
+│           └── experiences/
+│               ├── route.ts                   # GET (Feed query) & POST (Create)
+│               └── [id]/route.ts              # GET (Detail), PUT (Update), DELETE (Soft-delete)
+├── components/
+│   └── shared/
+│       ├── ExperienceCard.tsx                 # Feed Card with author, excerpt, tags, stats
+│       ├── CategoryFilter.tsx                 # Category switcher pill bar
+│       ├── TagBadge.tsx                       # Standardized tag pill
+│       ├── OutcomeTimeline.tsx                # 30d/90d/180d outcome visualization
+│       ├── PaginationControls.tsx             # Accessible pagination buttons
+│       ├── BookmarkButton.tsx                 # Interactive client bookmark button
+│       └── ExperienceDetailActions.tsx        # Edit/Delete author toolbar
+└── lib/
+    ├── validations/
+    │   └── experience.ts                      # Zod schemas for forms and queries
+    └── rate-limit.ts                          # Database sliding-window rate limiter
+```
+
+### API Contracts
+
+#### 1. `POST /api/v1/experiences`
+- **Auth**: Required
+- **Request**:
+  ```json
+  {
+    "title": "Failed my first semester in engineering",
+    "story": "During my first year, I struggled with calculus...",
+    "category_id": "a3b8d4e2-9f1c-4b5a-8e2d-3c4b5a6f7e8d",
+    "tags": ["college", "failure", "resilience"],
+    "status": "active"
+  }
+  ```
+- **Response (`201 Created`)**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": "f8a12b34-5678-49ab-9012-3456789abcde",
+      "title": "Failed my first semester in engineering",
+      "status": "active",
+      "created_at": "2026-08-31T17:00:00.000Z"
+    }
+  }
+  ```
+
+#### 2. `GET /api/v1/experiences`
+- **Auth**: Public
+- **Query Params**: `page=1`, `limit=10`, `category=education`, `tag=college`, `sort=latest|outcomes`
+- **Response (`200 OK`)**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "items": [
+        {
+          "id": "f8a12b34-5678-49ab-9012-3456789abcde",
+          "title": "Failed my first semester in engineering",
+          "story_preview": "During my first year, I struggled with calculus and time management...",
+          "author": { "id": "uuid", "username": "PhoenixRiser", "avatar_url": null },
+          "category": { "id": "uuid", "name": "Education", "slug": "education" },
+          "tags": ["college", "failure"],
+          "outcomes_count": 2,
+          "comments_count": 5,
+          "is_bookmarked": false,
+          "created_at": "2026-08-31T17:00:00.000Z"
+        }
+      ],
+      "pagination": { "page": 1, "limit": 10, "total": 28, "total_pages": 3 }
+    }
+  }
+  ```
+
+#### 3. `POST /api/v1/bookmarks`
+- **Auth**: Required
+- **Request**: `{ "experience_id": "f8a12b34-5678-49ab-9012-3456789abcde" }`
+- **Response (`200 OK`)**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "experience_id": "f8a12b34-5678-49ab-9012-3456789abcde",
+      "bookmarked": true
+    }
+  }
+  ```
+
+---
+
+## 4. Milestone 4 Execution Plan & Task Breakdown
+
+### Phase 1: Validations, Utilities & Rate Limiting
+- **Task 1.1**: Create `src/lib/validations/experience.ts` (Zod schemas for creation, update, query parameters).
+- **Task 1.2**: Create `src/lib/rate-limit.ts` (Database-backed sliding window rate limiter).
+
+### Phase 2: Backend API Routes
+- **Task 2.1**: Implement `GET /api/v1/categories` and `GET /api/v1/tags`.
+- **Task 2.2**: Implement `POST /api/v1/experiences` with tag auto-creation and transaction association.
+- **Task 2.3**: Implement `GET /api/v1/experiences` (Feed pagination, category filter, tag filter, `sort=outcomes`).
+- **Task 2.4**: Implement `GET`, `PUT`, `DELETE` at `/api/v1/experiences/[id]`.
+- **Task 2.5**: Implement `POST /api/v1/bookmarks` (Toggle).
+
+### Phase 3: Shared UI Primitives
+- **Task 3.1**: Build `TagBadge.tsx` and `CategoryFilter.tsx`.
+- **Task 3.2**: Build `ExperienceCard.tsx` with responsive layout, clamps, and stats.
+- **Task 3.3**: Build `OutcomeTimeline.tsx` (Visualizer for 30d/90d/180d milestones).
+- **Task 3.4**: Build `PaginationControls.tsx` and `BookmarkButton.tsx`.
+
+### Phase 4: Main Pages & User Flows
+- **Task 4.1**: Upgrade `src/app/(main)/page.tsx` with dynamic category filters, feed list, and sorting tabs.
+- **Task 4.2**: Implement `src/app/(main)/category/[slug]/page.tsx`.
+- **Task 4.3**: Implement `src/app/(main)/experiences/new/page.tsx` (Submission form with Publish vs Draft).
+- **Task 4.4**: Implement `src/app/(main)/experiences/[id]/page.tsx` (Story detail view, outcome timeline, bookmark button).
+- **Task 4.5**: Implement `src/app/(main)/experiences/[id]/edit/page.tsx` (Author editing and archive actions).
+
+### Phase 5: Testing, Documentation & Verification
+- **Task 5.1**: Run full compilation gates (`npm run type-check`, `npm run lint`, `npm run build`).
+- **Task 5.2**: Update `knowledge/M4-experiences-and-discovery.md`, `project-state.md`, and `docs/changelog.md`.
+
+---
+
+## 5. Git Commit Plan for Milestone 4
+
+| Commit Step | Description |
+| :--- | :--- |
+| **Commit 1** | `feat(m4): add experience validation schemas and database rate limiter` |
+| **Commit 2** | `feat(m4): implement experiences, categories, tags, and bookmark API routes` |
+| **Commit 3** | `feat(m4): add ExperienceCard, CategoryFilter, OutcomeTimeline, and BookmarkButton UI primitives` |
+| **Commit 4** | `feat(m4): implement public feed, category pages, creation form, and story detail view` |
+| **Commit 5** | `docs(m4): complete M4 knowledge documentation and update project state` |
+| **Tag** | `git tag M4_COMPLETE` |

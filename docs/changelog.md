@@ -4,6 +4,34 @@ All notable changes across development milestones are documented in this file.
 
 ---
 
+## [Milestone 4] - 2026-08-31
+
+### Added
+- **Experience Creation & Publication Lifecycle**:
+  - `POST /api/v1/experiences`: Authenticated experience submission with tag auto-creation, tag junction linking, and database sliding-window rate limiting.
+  - `src/app/(main)/experiences/new/page.tsx`: Full-featured creation form supporting title, story narrative, category picker, tag inputs, and Publish vs. Save as Draft actions.
+  - `src/app/(main)/experiences/[id]/edit/page.tsx`: Author story editor allowing title, narrative, category, tag updates, and publication visibility toggle.
+  - `DELETE /api/v1/experiences/[id]`: Soft-delete/archiving endpoint setting `deleted_at = NOW()` and `status = 'deleted'`.
+- **Public Feed & Discovery**:
+  - `GET /api/v1/experiences`: Paginated public feed endpoint supporting category filtering, tag filtering, pagination, and bookmark indicators.
+  - `src/app/(main)/page.tsx`: Responsive public feed with sub-500ms index queries, hero introduction, category pill bar, and pagination controls.
+  - `src/components/shared/CategoryFilter.tsx`: Horizontal scrolling category filter pill bar with deep-link query parameter support (`/?category=slug`).
+  - `src/components/shared/TagBadge.tsx`: Tag pill badges with deep-link tag query filtering (`/?tag=slug`).
+  - `src/components/shared/ExperienceCard.tsx`: Rich experience preview cards displaying author avatar, username, category pill, excerpt, tags, outcome badge, and relative timestamps.
+  - `src/components/shared/PaginationControls.tsx`: Accessible pagination navigation.
+- **Experience Detail & Story View**:
+  - `GET /api/v1/experiences/[id]`: Full story detail endpoint with access control for private drafts.
+  - `src/app/(main)/experiences/[id]/page.tsx`: Dedicated narrative reading page with multi-paragraph whitespace rendering, author header, tag list, and outcome count badge.
+  - `src/components/shared/ExperienceDetailActions.tsx`: Author edit/archive buttons and interactive bookmark button.
+- **Lightweight Bookmarking Engine**:
+  - `POST /api/v1/bookmarks`: Atomic toggle endpoint.
+  - `src/components/shared/BookmarkButton.tsx`: Client-side optimistic bookmark toggle button.
+- **Validation & Rate Limiting**:
+  - `src/lib/validations/experience.ts`: Zod validation schemas for experience creation, updating, feed queries, and bookmarks.
+  - `src/lib/rate-limit.ts`: Database-backed sliding-window rate limiter enforcing max 10 submissions/hr per user.
+
+---
+
 ## [Milestone 3] - 2026-08-31
 
 ### Added
