@@ -13,7 +13,7 @@
 ## Completed
 - M1 Foundation & Auth Setup
 - M2 Database Schema, RLS Policies & Seed Data
-- M3 Auth Integration & User Profiles
+- M3 Auth Integration & User Profiles (Approved & Verified)
 
 ## Current Milestone
 M4 — Experiences Lifecycle, Category Filter & Discovery
@@ -35,7 +35,7 @@ None
 | :--- | :--- | :--- | :--- |
 | **M1** | Foundation & Auth Setup | **Completed** | 2026-08-30 |
 | **M2** | Database Schema, RLS Policies & Seed Data | **Completed** | 2026-08-31 |
-| **M3** | Auth Integration & User Profiles | **Completed** | 2026-08-31 |
+| **M3** | Auth Integration & User Profiles | **Approved** | 2026-08-31 |
 | **M4** | Experiences Lifecycle, Category Filter & Discovery | **In Progress** | Current |
 | **M5** | Outcome Timeline (30d, 90d, 180d) & Comments | Pending | - |
 | **M6** | Insights Dashboard, Content Reporting & Rate Limiting | Pending | - |
@@ -63,17 +63,20 @@ None
 - Type-safe database definitions generated in `src/lib/supabase/database.types.ts` and integrated across Supabase client helpers.
 - Live database verification and automated constraint assertion test suite (`supabase/test_constraints.sql`).
 - Deterministic atomic rollback script (`supabase/migrations/00000_down_all.sql`).
+- Architecture Decision Records (`ADR-001` through `ADR-004`), API contract (`docs/api-contract.md`), and Contributor guide (`docs/contributor-guide.md`).
 
-### M3: Auth Integration & User Profiles (Completed 2026-08-31)
+### M3: Auth Integration & User Profiles (Approved 2026-08-31)
 - End-to-end authentication lifecycle (`POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/callback`).
 - Case-insensitive username collision handling mapping PostgreSQL error `23505` to `409 Conflict`.
-- Reserved username validation blocking `admin`, `moderator`, `support`, `official`, `system`.
+- Reserved username validation blocking `admin`, `moderator`, `support`, `official`, `system`, `root`, `eside`.
 - Edge Middleware route protection redirecting unauthenticated users to `/login?next=...` and authenticated users away from auth pages.
 - Profile auto-provisioning and sync between `auth.users` and `public.users`.
 - Profile Dashboard (`/profile`) organizing content across 5 lifecycle tabs: **Published**, **Drafts**, **Archived**, **My Outcomes**, and **Bookmarks**.
 - Profile Editor (`/profile/edit`) with live bio character counter (max 300 chars) and avatar preview.
 - Public anonymous author view (`/u/[username]`) isolating published experiences from private drafts.
 - Deterministic gradient anonymous avatar component (`UserAvatar.tsx`) and dynamic navigation header.
+- Module augmentation (`src/types/supabase-ssr.d.ts`) resolving upstream 5-parameter generic arity for `@supabase/ssr` with zero `any`, zero `@ts-ignore`, and zero type assertions.
+- 100% build validation passing (`npm run type-check`, `npm run lint`, `npm run build`).
 
 ---
 

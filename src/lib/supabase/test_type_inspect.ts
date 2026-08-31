@@ -1,16 +1,23 @@
-import { createServerClient } from "@supabase/ssr";
-import type { Database } from "@/lib/supabase/database.types";
+import { createClient } from "@/lib/supabase/server";
 
-const client = createServerClient<Database>("url", "key", {} as never);
+export async function checkTypes() {
+  const supabase = await createClient();
 
-export type ClientType = typeof client;
+  const userQuery = await supabase
+    .from("users")
+    .select("id, username, avatar_url, bio, created_at")
+    .single();
 
-// Test querying "users" table
-export type UsersQuery = ReturnType<typeof client.from<"users">>;
+  const expQuery = await supabase
+    .from("experiences")
+    .select("id, title, story, status, created_at, deleted_at, category_id");
 
-// Test querying select on users
-export type SelectUsersQuery = ReturnType<typeof client.from<"users">> extends {
-  select: (query?: infer Q) => infer R;
+  return {
+    user: userQuery.data,
+    experiences: expQuery.data,
+  };
 }
-  ? R
-  : never;
+
+export type InferredCheckResult = Awaited<ReturnType<typeof checkTypes>>;
+export type InferredProfile = InferredCheckResult["user"];
+export type InferredUserExperiences = InferredCheckResult["experiences"];
