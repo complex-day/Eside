@@ -16,7 +16,7 @@ export type ReportReason =
   | "privacy_violation"
   | "other";
 export type ReportStatus = "pending" | "reviewing" | "resolved" | "dismissed";
-export type OutcomeDays = 30 | 90 | 180;
+export type OutcomeDays = number;
 
 export type Database = {
   public: {

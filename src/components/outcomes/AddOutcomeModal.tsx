@@ -19,24 +19,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AlertCircle, Loader2, Milestone, PlusCircle, X } from "lucide-react";
+import { AlertCircle, Calendar, Compass, Loader2, PlusCircle, Sparkles, X } from "lucide-react";
 
 interface AddOutcomeModalProps {
   experienceId: string;
+  storyCreatedAt?: string;
   isOpen: boolean;
   onClose: () => void;
   onOutcomeAdded: (newOutcome: OutcomeItem) => void;
 }
 
-const PRESET_DAYS = [
-  { label: "30 Days", value: 30 },
-  { label: "90 Days", value: 90 },
-  { label: "180 Days", value: 180 },
-  { label: "1 Year", value: 365 },
-];
-
 export function AddOutcomeModal({
   experienceId,
+  storyCreatedAt,
   isOpen,
   onClose,
   onOutcomeAdded,
@@ -44,6 +39,16 @@ export function AddOutcomeModal({
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCustomDays, setIsCustomDays] = useState(false);
+
+  // Compute elapsed days from story creation date (default to 0 if freshly created)
+  const autoCalculatedDays = storyCreatedAt
+    ? Math.max(
+        0,
+        Math.floor(
+          (Date.now() - new Date(storyCreatedAt).getTime()) / (1000 * 60 * 60 * 24)
+        )
+      )
+    : 0;
 
   const {
     register,
@@ -55,23 +60,23 @@ export function AddOutcomeModal({
   } = useForm<CreateOutcomeInput>({
     resolver: zodResolver(createOutcomeSchema),
     defaultValues: {
-      days_after: 30,
+      days_after: undefined,
       content: "",
     },
   });
 
-  const currentDays = watch("days_after");
+  const customDaysValue = watch("days_after");
   const currentContent = watch("content") || "";
 
   if (!isOpen) return null;
 
-  const handleSelectPreset = (days: number) => {
-    setIsCustomDays(false);
-    setValue("days_after", days, { shouldValidate: true });
-  };
-
-  const handleSelectCustom = () => {
-    setIsCustomDays(true);
+  const handleToggleCustomDays = (enabled: boolean) => {
+    setIsCustomDays(enabled);
+    if (!enabled) {
+      setValue("days_after", undefined, { shouldValidate: true });
+    } else {
+      setValue("days_after", autoCalculatedDays, { shouldValidate: true });
+    }
   };
 
   const onSubmit = async (data: CreateOutcomeInput) => {
@@ -79,23 +84,33 @@ export function AddOutcomeModal({
     setServerError(null);
 
     try {
+      const payload: CreateOutcomeInput = {
+        content: data.content,
+      };
+
+      // Only send days_after if author specifically chose to override it
+      if (isCustomDays && typeof data.days_after === "number") {
+        payload.days_after = data.days_after;
+      }
+
       const response = await fetch(`/api/v1/experiences/${experienceId}/outcomes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       const json = await response.json();
 
       if (!response.ok || !json.success) {
-        setServerError(json.error?.message || "Failed to record outcome milestone.");
+        setServerError(json.error?.message || "Failed to record journey update.");
         return;
       }
 
       onOutcomeAdded(json.data);
       reset();
+      setIsCustomDays(false);
       onClose();
     } catch {
       setServerError("An unexpected network error occurred.");
@@ -110,13 +125,13 @@ export function AddOutcomeModal({
         <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border/40">
           <div className="space-y-0.5">
             <div className="flex items-center space-x-2 text-primary">
-              <Milestone className="h-4 w-4" />
+              <Compass className="h-4 w-4" />
               <CardTitle className="text-base font-bold">
-                Log Follow-up Outcome Milestone
+                Add Journey Update
               </CardTitle>
             </div>
             <CardDescription className="text-xs text-muted-foreground">
-              Document what happened next, how the situation evolved, and lessons learned.
+              Document what happened next, how your decisions played out, and what you learned.
             </CardDescription>
           </div>
           <button
@@ -137,61 +152,57 @@ export function AddOutcomeModal({
               </div>
             )}
 
-            {/* Timeframe Quick Selection */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">
-                Milestone Timeframe <span className="text-destructive">*</span>
-              </Label>
-              <div className="flex flex-wrap gap-1.5">
-                {PRESET_DAYS.map((preset) => {
-                  const isSelected = !isCustomDays && currentDays === preset.value;
-                  return (
-                    <button
-                      key={preset.value}
-                      type="button"
-                      onClick={() => handleSelectPreset(preset.value)}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-medium border transition-colors ${
-                        isSelected
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-surface-card text-muted-foreground border-border hover:bg-surface-elevated hover:text-foreground"
-                      }`}
-                    >
-                      {preset.label}
-                    </button>
-                  );
-                })}
+            {/* Auto-Calculated Day Indicator & Retroactive Option */}
+            <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-3.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Sparkles className="h-4 w-4 text-primary shrink-0" />
+                  <div>
+                    <span className="text-xs font-bold text-foreground">
+                      {isCustomDays && typeof customDaysValue === "number"
+                        ? `Day ${customDaysValue} (Custom Offset)`
+                        : `Day ${autoCalculatedDays} (Today)`}
+                    </span>
+                    <p className="text-[11px] text-muted-foreground">
+                      {isCustomDays
+                        ? "Documenting progress at a custom timeline checkpoint."
+                        : `Automatically calculated from when this story was created.`}
+                    </p>
+                  </div>
+                </div>
 
                 <button
                   type="button"
-                  onClick={handleSelectCustom}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-medium border transition-colors ${
-                    isCustomDays
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-surface-card text-muted-foreground border-border hover:bg-surface-elevated hover:text-foreground"
-                  }`}
+                  onClick={() => handleToggleCustomDays(!isCustomDays)}
+                  className="text-[11px] text-primary hover:underline font-medium flex items-center space-x-1"
                 >
-                  Custom Days
+                  <Calendar className="h-3 w-3" />
+                  <span>{isCustomDays ? "Use Today" : "Custom Day"}</span>
                 </button>
               </div>
 
               {isCustomDays && (
-                <div className="pt-2">
+                <div className="pt-2 border-t border-primary/10">
                   <div className="flex items-center space-x-2">
+                    <Label htmlFor="days_after" className="text-xs font-medium">
+                      Days after story began:
+                    </Label>
                     <Input
+                      id="days_after"
                       type="number"
                       min={0}
                       max={3650}
-                      placeholder="e.g. 45"
-                      className="h-8 text-xs w-32"
+                      placeholder="e.g. 14"
+                      className="h-8 text-xs w-28 bg-background"
                       {...register("days_after", { valueAsNumber: true })}
                     />
-                    <span className="text-xs text-muted-foreground">days after story began</span>
                   </div>
+                  {errors.days_after && (
+                    <p className="text-[11px] text-destructive mt-1">
+                      {errors.days_after.message}
+                    </p>
+                  )}
                 </div>
-              )}
-
-              {errors.days_after && (
-                <p className="text-[11px] text-destructive">{errors.days_after.message}</p>
               )}
             </div>
 
@@ -199,7 +210,7 @@ export function AddOutcomeModal({
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label htmlFor="content" className="text-xs font-semibold">
-                  Outcome Narrative & Learnings <span className="text-destructive">*</span>
+                  What Happened? <span className="text-destructive">*</span>
                 </Label>
                 <span className="text-[10px] text-muted-foreground">
                   {currentContent.length}/5,000
@@ -208,7 +219,7 @@ export function AddOutcomeModal({
               <textarea
                 id="content"
                 rows={6}
-                placeholder="What happened during this timeframe? What decisions did you make, and how did it turn out?"
+                placeholder="Describe your progress, decisions made, obstacles faced, or breakthroughs achieved..."
                 className="w-full rounded-md border border-input bg-background p-3 text-xs sm:text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-y leading-relaxed"
                 maxLength={5000}
                 {...register("content")}
@@ -239,12 +250,12 @@ export function AddOutcomeModal({
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                  Recording Milestone...
+                  Recording Journey Update...
                 </>
               ) : (
                 <>
                   <PlusCircle className="mr-1.5 h-3.5 w-3.5" />
-                  Log Outcome
+                  Post Journey Update
                 </>
               )}
             </Button>

@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
       category: searchParams.get("category") ?? undefined,
       tag: searchParams.get("tag") ?? undefined,
       sort: searchParams.get("sort") ?? "latest",
+      journey: searchParams.get("journey") ?? "all",
     });
 
     if (!parsedQuery.success) {
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { page, limit, category, tag } = parsedQuery.data;
+    const { page, limit, category, tag, sort, journey } = parsedQuery.data;
     const offset = (page - 1) * limit;
 
     const supabase = await createClient();
@@ -63,7 +64,6 @@ export async function GET(request: NextRequest) {
         if (catRecord) {
           categoryId = catRecord.id;
         } else {
-          // Non-existent category returns empty items list
           return NextResponse.json({
             success: true,
             data: {
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Resolve tag filter if provided
-    let filteredExperienceIds: string[] | null = null;
+    let tagFilteredIds: string[] | null = null;
     if (tag) {
       const normalizedTagName = normalizeTag(tag);
       const { data: tagRecord } = await supabase
@@ -91,8 +91,8 @@ export async function GET(request: NextRequest) {
           .select("experience_id")
           .eq("tag_id", tagRecord.id);
 
-        filteredExperienceIds = tagLinks?.map((tl) => tl.experience_id) ?? [];
-        if (filteredExperienceIds.length === 0) {
+        tagFilteredIds = tagLinks?.map((tl) => tl.experience_id) ?? [];
+        if (tagFilteredIds.length === 0) {
           return NextResponse.json({
             success: true,
             data: {
@@ -112,7 +112,102 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 3. Build main experiences query
+    // 3. Resolve Journey Depth filter (active vs long_running) if specified
+    let journeyFilteredIds: string[] | null = null;
+    if (journey === "active") {
+      const { data: activeOutcomeLinks } = await supabase
+        .from("outcomes")
+        .select("experience_id");
+
+      const activeIds = Array.from(new Set(activeOutcomeLinks?.map((o) => o.experience_id) ?? []));
+      journeyFilteredIds = activeIds;
+      if (journeyFilteredIds.length === 0) {
+        return NextResponse.json({
+          success: true,
+          data: {
+            items: [],
+            pagination: { page, limit, total: 0, total_pages: 0 },
+          },
+        });
+      }
+    } else if (journey === "long_running") {
+      const { data: longRunningLinks } = await supabase
+        .from("outcomes")
+        .select("experience_id")
+        .gte("days_after", 90);
+
+      const longIds = Array.from(new Set(longRunningLinks?.map((o) => o.experience_id) ?? []));
+      journeyFilteredIds = longIds;
+      if (journeyFilteredIds.length === 0) {
+        return NextResponse.json({
+          success: true,
+          data: {
+            items: [],
+            pagination: { page, limit, total: 0, total_pages: 0 },
+          },
+        });
+      }
+    }
+
+    // 4. Combine ID filters (tags and journey depth)
+    let combinedFilteredIds: string[] | null = null;
+    if (tagFilteredIds !== null && journeyFilteredIds !== null) {
+      const journeySet = new Set(journeyFilteredIds);
+      combinedFilteredIds = tagFilteredIds.filter((id) => journeySet.has(id));
+      if (combinedFilteredIds.length === 0) {
+        return NextResponse.json({
+          success: true,
+          data: {
+            items: [],
+            pagination: { page, limit, total: 0, total_pages: 0 },
+          },
+        });
+      }
+    } else if (tagFilteredIds !== null) {
+      combinedFilteredIds = tagFilteredIds;
+    } else if (journeyFilteredIds !== null) {
+      combinedFilteredIds = journeyFilteredIds;
+    }
+
+    // 5. Handle Recently Updated Sort vs Default Latest Sort
+    let sortedCandidateIds: string[] | null = null;
+    if (sort === "recently_updated") {
+      // Query outcomes ordered by most recent created_at
+      let outcomeQuery = supabase
+        .from("outcomes")
+        .select("experience_id, created_at")
+        .order("created_at", { ascending: false });
+
+      if (combinedFilteredIds !== null) {
+        outcomeQuery = outcomeQuery.in("experience_id", combinedFilteredIds);
+      }
+
+      const { data: recentOutcomes } = await outcomeQuery;
+      if (!recentOutcomes || recentOutcomes.length === 0) {
+        return NextResponse.json({
+          success: true,
+          data: {
+            items: [],
+            pagination: { page, limit, total: 0, total_pages: 0 },
+          },
+        });
+      }
+
+      // Preserve distinct chronological order of updated experiences
+      const seen = new Set<string>();
+      const orderedIds: string[] = [];
+      for (const row of recentOutcomes) {
+        if (!seen.has(row.experience_id)) {
+          seen.add(row.experience_id);
+          orderedIds.push(row.experience_id);
+        }
+      }
+
+      sortedCandidateIds = orderedIds;
+      combinedFilteredIds = orderedIds;
+    }
+
+    // 6. Build main experiences query
     let dbQuery = supabase
       .from("experiences")
       .select(
@@ -140,7 +235,9 @@ export async function GET(request: NextRequest) {
           )
         ),
         outcomes (
-          id
+          id,
+          days_after,
+          created_at
         ),
         comments (
           id
@@ -149,20 +246,23 @@ export async function GET(request: NextRequest) {
         { count: "exact" }
       )
       .eq("status", "active")
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false });
+      .is("deleted_at", null);
 
     if (categoryId) {
       dbQuery = dbQuery.eq("category_id", categoryId);
     }
 
-    if (filteredExperienceIds && filteredExperienceIds.length > 0) {
-      dbQuery = dbQuery.in("id", filteredExperienceIds);
+    if (combinedFilteredIds !== null && combinedFilteredIds.length > 0) {
+      dbQuery = dbQuery.in("id", combinedFilteredIds);
+    }
+
+    if (sort === "latest") {
+      dbQuery = dbQuery.order("created_at", { ascending: false });
     }
 
     dbQuery = dbQuery.range(offset, offset + limit - 1);
 
-    const { data: experiences, count, error } = await dbQuery;
+    const { data: rawExperiences, count, error } = await dbQuery;
 
     if (error) {
       console.error("GET /api/v1/experiences query error:", error);
@@ -178,7 +278,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 4. Fetch user bookmarks if authenticated to populate is_bookmarked
+    // If sort === "recently_updated", sort the fetched page to match ordered candidate IDs
+    let experiences = rawExperiences ?? [];
+    if (sort === "recently_updated" && sortedCandidateIds) {
+      const orderMap = new Map(sortedCandidateIds.map((id, index) => [id, index]));
+      experiences = [...experiences].sort((a, b) => {
+        const orderA = orderMap.get(a.id) ?? 999999;
+        const orderB = orderMap.get(b.id) ?? 999999;
+        return orderA - orderB;
+      });
+    }
+
+    // 7. Fetch user bookmarks if authenticated to populate is_bookmarked
     let userBookmarksSet = new Set<string>();
     if (user && experiences && experiences.length > 0) {
       const expIds = experiences.map((e) => e.id);
@@ -196,8 +307,8 @@ export async function GET(request: NextRequest) {
     const total = count ?? 0;
     const total_pages = Math.ceil(total / limit);
 
-    // 5. Format items
-    const items = (experiences ?? []).map((exp) => {
+    // 8. Format items with rich Living Journey metadata
+    const items = experiences.map((exp) => {
       const storyPreview =
         exp.story.length > 200 ? `${exp.story.slice(0, 200).trim()}...` : exp.story;
 
@@ -210,6 +321,28 @@ export async function GET(request: NextRequest) {
       const categoryData = exp.category;
       const outcomesList = exp.outcomes ?? [];
       const commentsList = exp.comments ?? [];
+
+      const totalUpdates = outcomesList.length;
+      let latestDaysAfter: number | null = null;
+      let latestUpdateAt: string | null = null;
+      let isLongRunning = false;
+
+      if (totalUpdates > 0) {
+        const sortedByDays = [...outcomesList].sort((a, b) => b.days_after - a.days_after);
+        const sortedByTime = [...outcomesList].sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        latestDaysAfter = sortedByDays[0]?.days_after ?? 0;
+        latestUpdateAt = sortedByTime[0]?.created_at ?? null;
+        isLongRunning = latestDaysAfter >= 90;
+      }
+
+      const journey = {
+        total_updates: totalUpdates,
+        latest_days_after: latestDaysAfter,
+        latest_update_at: latestUpdateAt,
+        is_long_running: isLongRunning,
+      };
 
       return {
         id: exp.id,
@@ -226,7 +359,8 @@ export async function GET(request: NextRequest) {
           name: categoryData?.name ?? "General",
         },
         tags,
-        outcomes_count: outcomesList.length,
+        outcomes_count: totalUpdates,
+        journey,
         comments_count: commentsList.length,
         is_bookmarked: userBookmarksSet.has(exp.id),
         created_at: exp.created_at,

@@ -15,12 +15,14 @@
 - M2 Database Schema, RLS Policies & Seed Data
 - M3 Auth Integration & User Profiles
 - M4 Experiences Lifecycle, Category Filter & Discovery
+- M5 Outcome Timeline & Comments
+- M6 Living Outcome Journeys & Outcome Discovery
 
 ## Current Milestone
-M4 — Experiences Lifecycle, Category Filter & Discovery
+M6 — Living Outcome Journeys & Outcome Discovery (Completed & Verified)
 
 ## Next Milestone
-M5 — Outcome Timeline (30d, 90d, 180d) & Comments
+M7 — Content Moderation, Reporting & Safety Engine
 
 ## Database Version
 v1
@@ -38,9 +40,10 @@ None
 | **M2** | Database Schema, RLS Policies & Seed Data | **Completed** | 2026-08-31 |
 | **M3** | Auth Integration & User Profiles | **Completed** | 2026-08-31 |
 | **M4** | Experiences Lifecycle, Category Filter & Discovery | **Completed** | 2026-08-31 |
-| **M5** | Outcome Timeline (30d, 90d, 180d) & Comments | **Completed** | 2026-08-31 |
-| **M6** | Insights Dashboard, Content Reporting & Rate Limiting | Pending | - |
-| **M7** | Analytics Event Tracking, Performance Tuning & Polish | Pending | - |
+| **M5** | Outcome Timeline & Comments | **Completed** | 2026-08-31 |
+| **M6** | Living Outcome Journeys & Outcome Discovery | **Completed** | 2026-09-01 |
+| **M7** | Content Moderation, Reporting & Safety Engine | Pending | - |
+| **M8** | Analytics Event Tracking, Performance Tuning & Polish | Pending | - |
 
 ---
 
@@ -106,13 +109,32 @@ None
 - **Documentation**:
   - `knowledge/M5-outcomes-and-comments.md` documenting architecture, security matrix, and rebuild guide.
 
+### M6: Living Outcome Journeys & Outcome Discovery (Completed 2026-09-01)
+- **Living Outcome Journey Architecture**:
+  - Unlocked free-form longitudinal outcome tracking ($0 \le \text{days\_after} \le 3650$) via migration `00014_unlock_freeform_outcome_journeys.sql`.
+  - Removed duplicate day limitations to allow multiple updates on the same day.
+  - Implemented automatic elapsed-day calculation from story creation date on client and server (`days_after` optional in `createOutcomeSchema`).
+  - Added optional custom day offset toggle for documenting retroactive journey checkpoints.
+  - Integrated dynamic delta duration badges (`+2 days later`, `+3 weeks later`, `+2 months later`) on `OutcomeMilestoneCard`.
+- **Multi-Dimensional Discovery Feed**:
+  - `FeedTabs`: Smooth switching between **Latest Stories** (`sort=latest`) and **🔥 Recently Updated Journeys** (`sort=recently_updated`).
+  - `JourneyFilterPills`: Deep-linkable journey depth filter chips (`All Stories`, `🚀 Active Journeys (1+)`, `⏳ Long-running (90d+)`).
+  - `JourneyProgressBadge`: Visual journey progress indicators on `ExperienceCard` items in public feeds.
+  - Optimized composite index `idx_outcomes_experience_recency` for sub-500ms feed query performance.
+- **Documentation**:
+  - `knowledge/M6-living-outcome-journeys.md` containing full architecture decisions, migration diffs, and rebuild guide.
+
 ---
 
-## Current Milestone Focus: M6
+## Next Milestone Focus: M7 — Content Moderation, Reporting & Safety Engine
 ### Goals:
-1. **Insights Aggregation Engine**:
-   - Outcome resolution ratio visualizer and category pattern insights.
-2. **Content Reporting & Moderation Engine**:
+1. **Content Reporting Workflows**:
    - Report submission modal for experiences and comments (`public.reports`).
-   - Automated rate limiting and abusive content flags per `moderation.md`.
+   - Moderation categories: Harassment, hate speech, spam, misinformation, privacy violations.
+2. **Abuse Prevention & Rate Limiting**:
+   - Deduplication of reports per user/target.
+   - Author restriction preventing reporting own content.
+   - Automated rate limiting on report submissions.
+3. **Admin Moderation Queue**:
+   - Moderation status lifecycle (`pending`, `reviewing`, `resolved`, `dismissed`).
 

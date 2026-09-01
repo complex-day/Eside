@@ -173,7 +173,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // 2. Fetch experience to verify ownership & active status
     const { data: experience, error: expError } = await supabase
       .from("experiences")
-      .select("id, author_id, status, deleted_at")
+      .select("id, author_id, status, deleted_at, created_at")
       .eq("id", id)
       .maybeSingle();
 
@@ -196,7 +196,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           success: false,
           error: {
             code: "FORBIDDEN",
-            message: "Only the author of this experience can log outcome milestones.",
+            message: "Only the author of this experience can post journey updates.",
           },
         },
         { status: 403 }
@@ -209,7 +209,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           success: false,
           error: {
             code: "BAD_REQUEST",
-            message: "Cannot add outcome milestones to an archived experience.",
+            message: "Cannot add journey updates to an archived experience.",
           },
         },
         { status: 400 }
@@ -226,7 +226,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           success: false,
           error: {
             code: "VALIDATION_ERROR",
-            message: parsed.error.errors[0]?.message ?? "Invalid outcome milestone data.",
+            message: parsed.error.errors[0]?.message ?? "Invalid journey update data.",
           },
         },
         { status: 400 }
@@ -235,12 +235,20 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const { days_after, content } = parsed.data;
 
-    // 4. Insert outcome milestone
+    // Auto-calculate elapsed days from story creation date if not explicitly specified
+    let computedDaysAfter = days_after;
+    if (computedDaysAfter === undefined || computedDaysAfter === null) {
+      const storyStartMs = new Date(experience.created_at).getTime();
+      const nowMs = Date.now();
+      computedDaysAfter = Math.max(0, Math.floor((nowMs - storyStartMs) / (1000 * 60 * 60 * 24)));
+    }
+
+    // 4. Insert journey outcome update
     const { data: newOutcome, error: insertError } = await supabase
       .from("outcomes")
       .insert({
         experience_id: id,
-        days_after,
+        days_after: computedDaysAfter,
         content,
       })
       .select("id, experience_id, days_after, content, created_at")
@@ -253,7 +261,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           success: false,
           error: {
             code: "SERVER_ERROR",
-            message: "Failed to record outcome milestone.",
+            message: "Failed to record journey update.",
           },
         },
         { status: 500 }

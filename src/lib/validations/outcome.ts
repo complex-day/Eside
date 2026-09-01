@@ -7,12 +7,12 @@ import { z } from "zod";
 export const createOutcomeSchema = z.object({
   days_after: z.coerce
     .number({
-      required_error: "Days after is required.",
       invalid_type_error: "Days after must be a number.",
     })
     .int({ message: "Days after must be an integer." })
     .min(0, { message: "Days after cannot be negative." })
-    .max(3650, { message: "Days after cannot exceed 3650 days (10 years)." }),
+    .max(3650, { message: "Days after cannot exceed 3650 days (10 years)." })
+    .optional(),
   content: z
     .string({
       required_error: "Outcome narrative is required.",

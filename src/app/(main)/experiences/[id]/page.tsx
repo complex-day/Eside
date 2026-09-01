@@ -263,11 +263,12 @@ export default async function ExperienceDetailPage({ params }: ExperiencePagePro
           </div>
         )}
 
-        {/* Milestone 5: Outcome Timeline */}
+        {/* Milestone 6: Living Outcome Journey Timeline */}
         <OutcomeTimeline
           experienceId={exp.id}
           initialOutcomes={initialOutcomes}
           isAuthor={isAuthor}
+          storyCreatedAt={exp.created_at}
         />
 
         {/* Milestone 5: Discussion & Comments Section */}

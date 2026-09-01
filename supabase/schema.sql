@@ -130,9 +130,8 @@ CREATE TABLE IF NOT EXISTS public.outcomes (
     days_after INTEGER NOT NULL,
     content TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CONSTRAINT chk_outcomes_days_after CHECK (days_after IN (30, 90, 180)),
-    CONSTRAINT chk_outcomes_content_length CHECK (char_length(content) >= 5 AND char_length(content) <= 3000),
-    CONSTRAINT uq_experience_days_after UNIQUE (experience_id, days_after)
+    CONSTRAINT chk_outcomes_days_after CHECK (days_after >= 0 AND days_after <= 3650),
+    CONSTRAINT chk_outcomes_content_length CHECK (char_length(content) >= 5 AND char_length(content) <= 5000)
 );
 
 -- 9. Table: bookmarks
@@ -180,6 +179,7 @@ CREATE INDEX IF NOT EXISTS idx_experience_tags_tag_id ON public.experience_tags 
 CREATE INDEX IF NOT EXISTS idx_comments_experience_timeline ON public.comments (experience_id, created_at ASC);
 CREATE INDEX IF NOT EXISTS idx_comments_author ON public.comments (author_id);
 CREATE INDEX IF NOT EXISTS idx_outcomes_experience_timeline ON public.outcomes (experience_id, days_after ASC);
+CREATE INDEX IF NOT EXISTS idx_outcomes_experience_recency ON public.outcomes (experience_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_bookmarks_user_feed ON public.bookmarks (user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_reports_moderation_queue ON public.reports (status, created_at ASC);
 CREATE INDEX IF NOT EXISTS idx_reports_experience_id ON public.reports (experience_id) WHERE experience_id IS NOT NULL;

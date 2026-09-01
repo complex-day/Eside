@@ -2,8 +2,9 @@ import Link from "next/link";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { TagBadge } from "@/components/shared/TagBadge";
 import { BookmarkButton } from "@/components/shared/BookmarkButton";
+import { JourneyProgressBadge } from "@/components/outcomes/JourneyProgressBadge";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Milestone, Clock } from "lucide-react";
+import { MessageSquare, Clock } from "lucide-react";
 import { formatRelativeTime } from "@/lib/utils";
 
 export interface ExperienceItem {
@@ -22,6 +23,12 @@ export interface ExperienceItem {
   };
   tags: string[];
   outcomes_count: number;
+  journey?: {
+    total_updates: number;
+    latest_days_after: number | null;
+    latest_update_at: string | null;
+    is_long_running: boolean;
+  };
   comments_count: number;
   is_bookmarked?: boolean;
   created_at: string;
@@ -33,6 +40,10 @@ interface ExperienceCardProps {
 
 export function ExperienceCard({ experience }: ExperienceCardProps) {
   const relativeTime = formatRelativeTime(experience.created_at);
+
+  const totalUpdates = experience.journey?.total_updates ?? experience.outcomes_count;
+  const latestDays = experience.journey?.latest_days_after ?? null;
+  const isLongRunning = experience.journey?.is_long_running ?? false;
 
   return (
     <article className="group rounded-xl border border-border bg-surface-card p-4 transition-all duration-150 hover:border-primary/40 hover:bg-surface-card/80 hover:shadow-md hover:shadow-black/20">
@@ -91,21 +102,15 @@ export function ExperienceCard({ experience }: ExperienceCardProps) {
         </div>
       )}
 
-      {/* Card Footer: Outcome Badge, Comments & Bookmark Action */}
+      {/* Card Footer: Living Journey Progress Badge, Comments & Bookmark Action */}
       <div className="flex items-center justify-between border-t border-border/40 pt-2.5 mt-2">
         <div className="flex items-center space-x-3 text-xs text-muted-foreground">
-          {/* Outcome Indicator */}
-          {experience.outcomes_count > 0 ? (
-            <span className="inline-flex items-center space-x-1 text-emerald-400 font-medium text-[11px]">
-              <Milestone className="h-3.5 w-3.5" />
-              <span>{experience.outcomes_count} Outcome{experience.outcomes_count > 1 ? "s" : ""} Logged</span>
-            </span>
-          ) : (
-            <span className="inline-flex items-center space-x-1 text-muted-foreground/60 text-[11px]">
-              <Milestone className="h-3.5 w-3.5" />
-              <span>No Outcomes Yet</span>
-            </span>
-          )}
+          {/* Journey Progress Indicator */}
+          <JourneyProgressBadge
+            totalUpdates={totalUpdates}
+            latestDaysAfter={latestDays}
+            isLongRunning={isLongRunning}
+          />
 
           {/* Comments count */}
           <span className="inline-flex items-center space-x-1 text-[11px]">
