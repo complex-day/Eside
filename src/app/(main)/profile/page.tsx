@@ -8,17 +8,7 @@ import { determineJourneyStage } from "@/lib/journey-signals";
 import { calculateJourneyMeta } from "@/lib/journey-helpers";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Calendar,
-  Edit3,
-  Bookmark,
-  FileText,
-  Clock,
-  Archive,
-  Milestone,
-  Plus,
-  ArrowRight,
-} from "lucide-react";
+
 
 export const metadata = {
   title: "Profile — Eside",

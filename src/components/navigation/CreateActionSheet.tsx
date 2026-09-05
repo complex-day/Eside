@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Compass, X, CheckCircle2, ArrowRight } from "lucide-react";
+import { X, ArrowRight } from "lucide-react";
 
 interface CreateActionSheetProps {
   isOpen: boolean;

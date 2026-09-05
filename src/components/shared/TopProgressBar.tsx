@@ -19,7 +19,7 @@ export function TopProgressBar() {
       }, 250);
       return () => clearTimeout(timer);
     }
-  }, [pathname, searchParams]);
+  }, [pathname, searchParams, loading]);
 
   useEffect(() => {
     // Intercept link clicks to trigger instant visual feedback

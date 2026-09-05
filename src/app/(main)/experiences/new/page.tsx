@@ -19,7 +19,6 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -27,7 +26,6 @@ import {
   ArrowLeft,
   Loader2,
   Send,
-  Compass,
   Tag,
   HelpCircle,
 } from "lucide-react";

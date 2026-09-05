@@ -85,7 +85,6 @@ export function OutcomeMilestoneCard({
   experienceId,
   isAuthor = false,
   deltaDays,
-  isLatest = false,
   onOutcomeUpdated,
   onOutcomeDeleted,
 }: OutcomeMilestoneCardProps) {

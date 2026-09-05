@@ -6,7 +6,6 @@ import { determineJourneyStage } from "@/lib/journey-signals";
 import { type JourneyMeta } from "@/lib/journey-helpers";
 import { formatRelativeTime } from "@/lib/utils";
 import {
-  CheckCircle2,
   MessageSquare,
   ArrowRight,
   Milestone,

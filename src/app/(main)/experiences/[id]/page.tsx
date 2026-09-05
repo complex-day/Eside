@@ -14,7 +14,6 @@ import { calculateJourneyMeta } from "@/lib/journey-helpers";
 import {
   ArrowLeft,
   Calendar,
-  CheckCircle2,
 } from "lucide-react";
 import { formatFullDate } from "@/lib/utils";
 

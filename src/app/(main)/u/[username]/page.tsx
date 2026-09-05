@@ -7,7 +7,7 @@ import { calculateJourneyMeta } from "@/lib/journey-helpers";
 import { calculateCalendarDaysDifference } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, FileText } from "lucide-react";
+
 
 export const dynamic = "force-dynamic";
 
