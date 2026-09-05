@@ -82,7 +82,7 @@ export function JourneySnapshot({
       </div>
 
       {/* Latest Update Quote Preview if present */}
-      {journey.latestUpdateContent && variant !== "compact" && (
+      {journey.latestUpdateContent && (
         <div className="rounded bg-black/40 p-2 border border-white/[0.05] text-[11px] text-[#CBD5E1] leading-relaxed italic">
           <span className="font-semibold not-italic text-[#94A3B8] mr-1.5">Latest Milestone:</span>
           &ldquo;{journey.latestUpdateContent.length > 130

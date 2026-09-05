@@ -6,7 +6,16 @@ import { useState } from "react";
 import { Compass, Flame, Plus, Bookmark, User } from "lucide-react";
 import { CreateActionSheet } from "@/components/navigation/CreateActionSheet";
 
-export function BottomNav() {
+interface BottomNavProps {
+  user?: {
+    id: string;
+    email?: string;
+    username?: string;
+    avatar_url?: string | null;
+  } | null;
+}
+
+export function BottomNav({ user }: BottomNavProps = {}) {
   const pathname = usePathname();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
@@ -92,6 +101,7 @@ export function BottomNav() {
       <CreateActionSheet
         isOpen={isSheetOpen}
         onClose={() => setIsSheetOpen(false)}
+        isAuthenticated={Boolean(user)}
       />
     </>
   );

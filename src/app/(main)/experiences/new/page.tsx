@@ -26,6 +26,7 @@ import {
   AlertCircle,
   ArrowLeft,
   Loader2,
+  Send,
   Tag,
   HelpCircle,
 } from "lucide-react";

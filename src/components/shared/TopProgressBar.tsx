@@ -19,6 +19,7 @@ export function TopProgressBar() {
       }, 250);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [pathname, searchParams, loading]);
 
   useEffect(() => {

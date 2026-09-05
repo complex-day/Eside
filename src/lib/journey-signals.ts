@@ -1,3 +1,5 @@
+import { type OutcomeStatus } from "@/lib/journey-helpers";
+
 export type JourneyStage =
   | "daisy"
   | "golden"
@@ -100,7 +102,7 @@ interface JourneyInput {
     name?: string;
   };
   journey?: {
-    outcomeStatus?: "in_progress" | "success" | "learning" | "failed";
+    outcomeStatus?: OutcomeStatus;
     totalUpdates?: number;
   };
   tags?: string[];

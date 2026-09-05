@@ -226,7 +226,7 @@ export default async function ExperienceDetailPage({ params }: ExperiencePagePro
               href={`/u/${authorData?.username ?? "anonymous"}`}
               className="flex items-center gap-2 text-[#F1F5F9] font-semibold hover:text-[#4DA3FF] transition-colors"
             >
-              <UserAvatar username={authorData?.username ?? "anonymous"} size="xs" />
+              <UserAvatar username={authorData?.username ?? "anonymous"} size="sm" />
               <span>@{authorData?.username ?? "anonymous"}</span>
             </Link>
             <span className="text-[#64748B]">•</span>

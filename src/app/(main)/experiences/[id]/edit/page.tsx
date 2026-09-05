@@ -20,6 +20,8 @@ import {
   Loader2,
   Save,
   Tag,
+  Edit3,
+  Trash2,
 } from "lucide-react";
 
 interface CategoryOption {
