@@ -4,36 +4,38 @@
 
 @layer base {
   :root {
-    /* Dark Theme Default for Eside */
-    --background: 222 47% 11%;      /* #0F172A Slate-900 */
-    --foreground: 210 40% 98%;      /* #F8FAFC Slate-50 */
+    /* Pure Deep Black & Blue Lotus Aesthetic */
+    --background: 0 0% 2%;            /* #050505 Pure Deep Black */
+    --foreground: 220 20% 97%;        /* #F1F5F9 High-legibility crisp text */
 
-    --card: 217 33% 17%;            /* #1E293B Slate-800 */
-    --card-foreground: 210 40% 98%;
+    --card: 220 20% 5%;               /* #090B0F Card Surface (fallback) */
+    --card-foreground: 220 20% 97%;
 
-    --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 20% 6%;
+    --popover-foreground: 220 20% 97%;
 
-    --primary: 243 75% 59%;         /* #4F46E5 Indigo-600 */
-    --primary-foreground: 0 0% 100%;
+    --primary: 212 100% 65%;          /* #4DA3FF Blue Lotus */
+    --primary-foreground: 0 0% 100%;  /* #FFFFFF Crisp White */
+    --primary-container: 212 95% 55%;
+    --on-primary-container: 0 0% 100%;
 
-    --secondary: 189 94% 43%;       /* #06B6D4 Cyan-500 */
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 43 100% 50%;         /* #FFB800 Momentum Gold */
+    --secondary-foreground: 0 0% 7%;
 
-    --muted: 217 19% 27%;           /* #334155 Slate-700 */
-    --muted-foreground: 215 20% 65%;/* #94A3B8 Slate-400 */
+    --muted: 220 18% 10%;             /* #141720 Muted background */
+    --muted-foreground: 220 12% 65%;  /* #94A3B8 Refined Slate */
 
-    --accent: 217 33% 22%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 18 100% 60%;            /* #FF6B35 Turning Point Orange */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;       /* #EF4444 Red-500 */
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;         /* #EF4444 */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217 19% 27%;          /* #334155 Slate-700 */
-    --input: 217 19% 27%;
-    --ring: 243 75% 59%;
+    --border: 0 0% 100% / 0.08;       /* rgba(255, 255, 255, 0.08) */
+    --input: 0 0% 100% / 0.08;
+    --ring: 212 100% 65%;             /* Blue Lotus Focus Ring */
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 }
 
@@ -42,26 +44,100 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground antialiased min-h-screen selection:bg-primary/30 selection:text-white;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    @apply bg-background text-foreground antialiased min-h-screen selection:bg-[#4DA3FF]/25 selection:text-white;
+    font-feature-settings: "rlig" 1, "calt" 1, "cv02" 1, "cv03" 1, "cv04" 1, "cv11" 1;
   }
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Glass Card & Surface Utilities */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.glass-card-hover {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card-hover:hover {
+  background: rgba(255, 255, 255, 0.045);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.glass-panel-deep {
+  background: rgba(9, 11, 15, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* Monospace & Typographic Utilities */
+.font-mono-badge {
+  font-family: var(--font-mono), "Geist Mono", "JetBrains Mono", monospace;
+  font-size: 0.6875rem;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+.font-mono-label-sm {
+  font-family: var(--font-mono), "Geist Mono", "JetBrains Mono", monospace;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+
+.font-mono-metric-base {
+  font-family: var(--font-mono), "Geist Mono", "JetBrains Mono", monospace;
+  font-size: 1rem;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  font-weight: 500;
+}
+
+.font-mono-metric-lg {
+  font-family: var(--font-mono), "Geist Mono", "JetBrains Mono", monospace;
+  font-size: 1.75rem;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+}
+
+/* Subtle Hero Floating Animation */
+@keyframes lotusFloat {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.02);
+  }
+}
+
+.animate-lotus-float {
+  animation: lotusFloat 7s ease-in-out infinite;
 }
 
 /* Custom subtle scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #050505;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: rgba(255, 255, 255, 0.2);
 }

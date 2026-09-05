@@ -69,3 +69,40 @@ export function formatRelativeTime(input: string | Date | number): string {
     return formatDate(input);
   }
 }
+
+/**
+ * Calculates the calendar day difference (midnight-to-midnight) between two dates.
+ * Example: Sept 4 to Sept 5 is always 1 calendar day regardless of exact hour/minute.
+ */
+export function calculateCalendarDaysDifference(
+  startDateInput: string | Date | number,
+  endDateInput: string | Date | number = new Date()
+): number {
+  try {
+    const start = new Date(startDateInput);
+    const end = new Date(endDateInput);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return 0;
+    }
+
+    // Normalize both dates to midnight local time
+    const startMidnight = new Date(
+      start.getFullYear(),
+      start.getMonth(),
+      start.getDate()
+    ).getTime();
+
+    const endMidnight = new Date(
+      end.getFullYear(),
+      end.getMonth(),
+      end.getDate()
+    ).getTime();
+
+    const diffDays = Math.round((endMidnight - startMidnight) / (1000 * 60 * 60 * 24));
+    return Math.max(0, diffDays);
+  } catch {
+    return 0;
+  }
+}
+

@@ -6,7 +6,7 @@ import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatRelativeTime } from "@/lib/utils";
-import { Edit2, Trash2, Loader2, Clock, Check, X } from "lucide-react";
+import { Edit2, Trash2, Loader2, Clock, Check, X, Reply } from "lucide-react";
 
 export interface CommentItem {
   id: string;
@@ -27,12 +27,14 @@ interface CommentCardProps {
   comment: CommentItem;
   onCommentUpdated: (id: string, newContent: string, updatedAt: string) => void;
   onCommentDeleted: (id: string) => void;
+  onReply?: (username: string) => void;
 }
 
 export function CommentCard({
   comment,
   onCommentUpdated,
   onCommentDeleted,
+  onReply,
 }: CommentCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
@@ -98,17 +100,37 @@ export function CommentCard({
     }
   };
 
+  // Helper to highlight @username mentions with Blue Lotus badge
+  const renderFormattedContent = (text: string) => {
+    const parts = text.split(/(@[a-zA-Z0-9_]+)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith("@") && part.length > 1) {
+        const username = part.slice(1);
+        return (
+          <Link
+            key={index}
+            href={`/u/${username}`}
+            className="inline-flex items-center font-semibold text-[#4DA3FF] bg-[#4DA3FF]/10 hover:bg-[#4DA3FF]/20 px-1 py-0.2 rounded transition-colors"
+          >
+            {part}
+          </Link>
+        );
+      }
+      return part;
+    });
+  };
+
   return (
-    <div className="rounded-xl border border-border/70 bg-surface-card/80 p-4 space-y-2.5 transition-all hover:border-border">
+    <div className="rounded-xl glass-card p-3.5 sm:p-4 space-y-2.5 transition-all">
       {/* Header: Author Info & Actions */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center space-x-2 min-w-0">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
           <Link
             href={`/u/${comment.author.username}`}
-            className="flex items-center space-x-2 shrink-0 group"
+            className="flex items-center space-x-1.5 shrink-0 group"
           >
             <UserAvatar username={comment.author.username} size="sm" />
-            <span className="text-xs font-semibold text-foreground truncate group-hover:underline">
+            <span className="text-xs font-semibold text-[#F1F5F9] truncate max-w-[120px] sm:max-w-[200px] group-hover:text-[#4DA3FF] transition-colors">
               @{comment.author.username}
             </span>
           </Link>
@@ -116,16 +138,16 @@ export function CommentCard({
           {comment.is_story_author && (
             <Badge
               variant="outline"
-              className="text-[9px] px-1.5 py-0 bg-primary/10 text-primary border-primary/20 font-bold"
+              className="text-[9px] px-1.5 py-0 bg-[#4DA3FF]/10 text-[#4DA3FF] border-[#4DA3FF]/25 font-bold shrink-0"
             >
               Author
             </Badge>
           )}
 
-          <span className="text-muted-foreground/40 text-xs">•</span>
+          <span className="text-[#64748B] text-xs shrink-0">•</span>
 
-          <div className="flex items-center space-x-1 text-[10px] text-muted-foreground">
-            <Clock className="h-2.5 w-2.5" />
+          <div className="flex items-center space-x-1 text-[10px] text-[#94A3B8] tabular-nums shrink-0">
+            <Clock className="h-2.5 w-2.5" aria-hidden="true" />
             <span>{relativeTime}</span>
             {isEdited && <span className="italic">(edited)</span>}
           </div>
@@ -133,30 +155,30 @@ export function CommentCard({
 
         {/* Comment Author Actions */}
         {comment.is_author && !isEditing && (
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1 shrink-0">
             <button
               onClick={() => {
                 setEditContent(comment.content);
                 setIsEditing(true);
               }}
-              className="rounded p-1 text-muted-foreground hover:text-foreground hover:bg-surface-elevated transition-colors"
+              className="rounded p-1 text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-white/[0.05] transition-colors"
               title="Edit comment"
               aria-label="Edit comment"
             >
-              <Edit2 className="h-3 w-3" />
+              <Edit2 className="h-3 w-3" aria-hidden="true" />
             </button>
 
             <button
               onClick={handleDelete}
               disabled={isDeleting}
-              className="rounded p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              className="rounded p-1 text-[#94A3B8] hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
               title="Delete comment"
               aria-label="Delete comment"
             >
               {isDeleting ? (
-                <Loader2 className="h-3 w-3 animate-spin text-destructive" />
+                <Loader2 className="h-3 w-3 animate-spin text-rose-400" aria-hidden="true" />
               ) : (
-                <Trash2 className="h-3 w-3" />
+                <Trash2 className="h-3 w-3" aria-hidden="true" />
               )}
             </button>
           </div>
@@ -167,17 +189,17 @@ export function CommentCard({
       {isEditing ? (
         <div className="space-y-2 pt-1">
           {editError && (
-            <p className="text-[11px] text-destructive">{editError}</p>
+            <p className="text-[11px] text-rose-400">{editError}</p>
           )}
           <textarea
             rows={3}
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            className="w-full rounded-md border border-input bg-background p-2.5 text-xs text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-y leading-relaxed"
+            className="w-full rounded-md border border-white/[0.1] bg-black/60 p-2.5 text-xs text-[#F1F5F9] shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#4DA3FF] resize-y leading-relaxed"
             maxLength={1500}
           />
-          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-            <span>{editContent.length}/1,500</span>
+          <div className="flex items-center justify-between text-[10px] text-[#94A3B8]">
+            <span className="font-mono tabular-nums">{editContent.length}/1,500</span>
             <div className="flex items-center space-x-1.5">
               <Button
                 type="button"
@@ -185,7 +207,7 @@ export function CommentCard({
                 variant="outline"
                 disabled={isSaving}
                 onClick={() => setIsEditing(false)}
-                className="h-7 text-[11px] px-2"
+                className="h-7 text-[11px] px-2 border-white/10 text-[#F1F5F9]"
               >
                 <X className="h-3 w-3 mr-1" />
                 Cancel
@@ -195,7 +217,7 @@ export function CommentCard({
                 size="sm"
                 disabled={isSaving || editContent.trim().length < 2}
                 onClick={handleSaveEdit}
-                className="h-7 text-[11px] px-2 font-semibold"
+                className="h-7 text-[11px] px-2 font-semibold bg-[#4DA3FF] text-black hover:bg-[#60A5FA]"
               >
                 {isSaving ? (
                   <Loader2 className="h-3 w-3 animate-spin mr-1" />
@@ -208,9 +230,25 @@ export function CommentCard({
           </div>
         </div>
       ) : (
-        <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
-          {comment.content}
-        </p>
+        <div className="space-y-2">
+          <p className="text-xs sm:text-sm text-[#CBD5E1] leading-relaxed whitespace-pre-line">
+            {renderFormattedContent(comment.content)}
+          </p>
+
+          {/* Reply Button */}
+          {onReply && (
+            <div className="pt-1 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => onReply(comment.author.username)}
+                className="inline-flex items-center space-x-1 text-[11px] font-medium text-[#94A3B8] hover:text-[#4DA3FF] transition-colors py-0.5 px-1.5 rounded hover:bg-white/[0.04]"
+              >
+                <Reply className="h-3 w-3" />
+                <span>Reply</span>
+              </button>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

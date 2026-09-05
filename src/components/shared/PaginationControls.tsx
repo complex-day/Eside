@@ -27,10 +27,10 @@ export function PaginationControls({
   };
 
   return (
-    <div className="flex items-center justify-between border-t border-border pt-4 mt-6 text-xs text-muted-foreground">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#94A3B8] w-full">
       <span>
-        Showing Page <strong className="text-foreground">{currentPage}</strong> of{" "}
-        <strong className="text-foreground">{totalPages}</strong> ({totalItems} total)
+        Showing Page <strong className="text-[#F1F5F9] font-mono">{currentPage}</strong> of{" "}
+        <strong className="text-[#F1F5F9] font-mono">{totalPages}</strong> ({totalItems} documented journeys)
       </span>
 
       <div className="flex items-center space-x-2">
@@ -39,7 +39,7 @@ export function PaginationControls({
           size="sm"
           onClick={() => navigateToPage(currentPage - 1)}
           disabled={currentPage <= 1}
-          className="h-8 px-2.5 text-xs"
+          className="h-8 px-3 text-xs border-white/10 bg-white/[0.03] text-[#F1F5F9] hover:bg-white/[0.08] disabled:opacity-30 rounded-lg"
         >
           <ChevronLeft className="h-3.5 w-3.5 mr-1" />
           Previous
@@ -50,7 +50,7 @@ export function PaginationControls({
           size="sm"
           onClick={() => navigateToPage(currentPage + 1)}
           disabled={currentPage >= totalPages}
-          className="h-8 px-2.5 text-xs"
+          className="h-8 px-3 text-xs border-white/10 bg-white/[0.03] text-[#F1F5F9] hover:bg-white/[0.08] disabled:opacity-30 rounded-lg"
         >
           Next
           <ChevronRight className="h-3.5 w-3.5 ml-1" />

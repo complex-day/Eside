@@ -1,4 +1,5 @@
 import { Header } from "@/components/shared/Header";
+import { BottomNav } from "@/components/navigation/BottomNav";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function MainLayout({
@@ -36,9 +37,11 @@ export default async function MainLayout({
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <Header user={sessionUser} />
-      <main className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 pb-20 sm:pb-8">
+      <main className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 pb-24 sm:pb-8">
         {children}
       </main>
+      <BottomNav user={sessionUser} />
     </div>
   );
 }
+

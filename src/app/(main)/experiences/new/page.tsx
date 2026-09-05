@@ -27,7 +27,7 @@ import {
   ArrowLeft,
   Loader2,
   Send,
-  FileText,
+  Compass,
   Tag,
   HelpCircle,
 } from "lucide-react";
@@ -135,7 +135,7 @@ export default function NewExperiencePage() {
           router.push("/login?next=/experiences/new");
           return;
         }
-        setServerError(json.error?.message || "Failed to submit experience. Please check your inputs.");
+        setServerError(json.error?.message || "Failed to document decision. Please check your inputs.");
         return;
       }
 
@@ -157,24 +157,24 @@ export default function NewExperiencePage() {
     <div className="w-full max-w-2xl mx-auto space-y-4">
       <Link
         href="/"
-        className="inline-flex items-center text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+        className="inline-flex items-center text-xs font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors"
       >
         <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
         Back to Feed
       </Link>
 
-      <Card className="border-border bg-surface-card shadow-lg shadow-black/20">
-        <CardHeader className="space-y-1.5 pb-4 border-b border-border/40">
-          <div className="flex items-center space-x-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <FileText className="h-4 w-4" />
+      <Card className="glass-card shadow-lg border-white/[0.08]">
+        <CardHeader className="space-y-1.5 pb-4 border-b border-white/[0.06]">
+          <div className="flex items-center space-x-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100/10 text-amber-200 border border-amber-100/15 text-sm">
+              🌼
             </div>
             <div>
-              <CardTitle className="text-lg sm:text-xl font-bold tracking-tight">
-                Share a Lived Experience
+              <CardTitle className="text-lg sm:text-xl font-bold tracking-tight text-[#F1F5F9]">
+                Start a Journey: Day 0 Baseline
               </CardTitle>
-              <CardDescription className="text-xs text-muted-foreground">
-                Document what happened, actions taken, lessons learned, and the outcome.
+              <CardDescription className="text-xs text-[#94A3B8]">
+                Establish the crossroads: the dilemma, choices evaluated, and initial actions taken.
               </CardDescription>
             </div>
           </div>
@@ -192,17 +192,17 @@ export default function NewExperiencePage() {
             {/* Title Input */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="title" className="text-xs font-semibold">
-                  Experience Title <span className="text-destructive">*</span>
+                <Label htmlFor="title" className="text-xs font-semibold text-[#F1F5F9]">
+                  Dilemma / Decision Title <span className="text-destructive">*</span>
                 </Label>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-[10px] text-[#64748B]">
                   {titleValue.length}/150
                 </span>
               </div>
               <Input
                 id="title"
-                placeholder="e.g. Failed my first college semester and recovered"
-                className="h-9 text-xs sm:text-sm"
+                placeholder="e.g. Quit my corporate job at age 28 to start a solo engineering studio"
+                className="h-9 text-xs sm:text-sm bg-black/60 border-white/[0.08] text-[#F1F5F9] focus:border-[#4DA3FF]/50"
                 maxLength={150}
                 {...register("title")}
               />
@@ -213,19 +213,19 @@ export default function NewExperiencePage() {
 
             {/* Category Dropdown */}
             <div className="space-y-1.5">
-              <Label htmlFor="category_id" className="text-xs font-semibold">
-                Topic Category <span className="text-destructive">*</span>
+              <Label htmlFor="category_id" className="text-xs font-semibold text-[#F1F5F9]">
+                Domain / Category <span className="text-destructive">*</span>
               </Label>
               {isFetchingCategories ? (
-                <div className="h-9 rounded-md border border-input bg-surface-elevated animate-pulse" />
+                <div className="h-9 rounded-md border border-white/[0.08] bg-black/40 animate-pulse" />
               ) : (
                 <select
                   id="category_id"
-                  className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className="w-full h-9 rounded-md border border-white/[0.08] bg-black/60 px-3 py-1 text-xs text-[#F1F5F9] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#4DA3FF]"
                   {...register("category_id")}
                 >
                   {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
+                    <option key={cat.id} value={cat.id} className="bg-[#090B0F]">
                       {cat.name}
                     </option>
                   ))}
@@ -239,18 +239,18 @@ export default function NewExperiencePage() {
             {/* Story Narrative */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="story" className="text-xs font-semibold">
-                  Story Narrative <span className="text-destructive">*</span>
+                <Label htmlFor="story" className="text-xs font-semibold text-[#F1F5F9]">
+                  Initial Decision Context &amp; Actions (Day 0) <span className="text-destructive">*</span>
                 </Label>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-[10px] text-[#64748B]">
                   {storyValue.length}/10,000
                 </span>
               </div>
               <textarea
                 id="story"
                 rows={8}
-                placeholder="Describe your situation in detail: What was the initial event or mistake? What choices did you make? What actions worked or failed? (Minimum 10 characters)"
-                className="w-full rounded-md border border-input bg-background p-3 text-xs sm:text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-y leading-relaxed"
+                placeholder="Detail the situation: What was the dilemma? What choices did you evaluate? What plan or initial action did you commit to? (You will return later at Day 14, 30, or 90 to log follow-up milestones as outcomes unfold)."
+                className="w-full rounded-md border border-white/[0.08] bg-black/60 p-3 text-xs sm:text-sm text-[#F1F5F9] shadow-sm placeholder:text-[#64748B] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#4DA3FF] resize-y leading-relaxed"
                 maxLength={10000}
                 {...register("story")}
               />
@@ -262,11 +262,11 @@ export default function NewExperiencePage() {
             {/* Tags Input */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="tags" className="text-xs font-semibold flex items-center space-x-1">
-                  <Tag className="h-3.5 w-3.5 text-muted-foreground mr-1" />
-                  Tags <span className="text-[10px] text-muted-foreground font-normal">(Optional, max 5)</span>
+                <Label htmlFor="tags" className="text-xs font-semibold text-[#F1F5F9] flex items-center space-x-1">
+                  <Tag className="h-3.5 w-3.5 text-[#64748B] mr-1" />
+                  Tags <span className="text-[10px] text-[#64748B] font-normal">(Optional, max 5)</span>
                 </Label>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-[10px] text-[#64748B]">
                   {tags.length}/5 tags
                 </span>
               </div>
@@ -276,9 +276,9 @@ export default function NewExperiencePage() {
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleAddTag}
-                placeholder={tags.length >= 5 ? "Tag limit reached (max 5)" : "Type a tag and press Enter or comma..."}
+                placeholder={tags.length >= 5 ? "Tag limit reached (max 5)" : "Type a tag and press Enter..."}
                 disabled={tags.length >= 5}
-                className="h-9 text-xs"
+                className="h-9 text-xs bg-black/60 border-white/[0.08] text-[#F1F5F9]"
               />
 
               {tags.length > 0 && (
@@ -287,13 +287,13 @@ export default function NewExperiencePage() {
                     <Badge
                       key={t}
                       variant="secondary"
-                      className="text-xs pl-2.5 pr-1.5 py-0.5 flex items-center space-x-1 bg-secondary text-secondary-foreground"
+                      className="text-xs pl-2.5 pr-1.5 py-0.5 flex items-center space-x-1 bg-white/[0.05] text-[#CBD5E1] border border-white/[0.08]"
                     >
                       <span>#{t}</span>
                       <button
                         type="button"
                         onClick={() => handleRemoveTag(t)}
-                        className="rounded-full p-0.5 hover:bg-surface-elevated text-muted-foreground hover:text-foreground"
+                        className="rounded-full p-0.5 hover:bg-white/[0.1] text-[#94A3B8] hover:text-[#F1F5F9]"
                         aria-label={`Remove tag ${t}`}
                       >
                         ×
@@ -305,22 +305,22 @@ export default function NewExperiencePage() {
             </div>
 
             {/* Anonymity Banner */}
-            <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 flex items-start space-x-2.5">
-              <HelpCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Your experience will be published under your anonymous pseudonym. Never include real names, addresses, or private sensitive contact information.
+            <div className="rounded-lg border border-white/[0.08] bg-black/40 p-3 flex items-start space-x-2.5">
+              <HelpCircle className="h-4 w-4 text-[#4DA3FF] shrink-0 mt-0.5" />
+              <p className="text-[11px] text-[#94A3B8] leading-relaxed">
+                Your journey is documented anonymously. Never include real full names, company confidential data, or private contact details.
               </p>
             </div>
           </CardContent>
 
-          <CardFooter className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 pt-2 border-t border-border/40">
+          <CardFooter className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 pt-3 border-t border-white/[0.06]">
             <Button
               type="button"
               variant="outline"
               size="sm"
               disabled={isSubmitting}
               onClick={handleSubmit((data) => submitExperience(data, "hidden"))}
-              className="w-full sm:w-auto h-9 text-xs font-medium"
+              className="w-full sm:w-auto h-9 text-xs font-medium border-white/10 bg-white/[0.03] text-[#F1F5F9] hover:bg-white/[0.06]"
             >
               Save as Draft
             </Button>
@@ -330,17 +330,17 @@ export default function NewExperiencePage() {
               size="sm"
               disabled={isSubmitting}
               onClick={handleSubmit((data) => submitExperience(data, "active"))}
-              className="w-full sm:w-auto h-9 text-xs font-semibold"
+              className="w-full sm:w-auto h-9 text-xs font-semibold bg-[#4DA3FF] text-black hover:bg-[#60A5FA]"
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                  Publishing...
+                  Publishing Journey...
                 </>
               ) : (
                 <>
                   <Send className="mr-1.5 h-3.5 w-3.5" />
-                  Publish Experience
+                  Publish Day 0 Decision
                 </>
               )}
             </Button>

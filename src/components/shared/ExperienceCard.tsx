@@ -1,11 +1,16 @@
 import Link from "next/link";
 import { UserAvatar } from "@/components/shared/UserAvatar";
-import { TagBadge } from "@/components/shared/TagBadge";
 import { BookmarkButton } from "@/components/shared/BookmarkButton";
-import { JourneyProgressBadge } from "@/components/outcomes/JourneyProgressBadge";
-import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Clock } from "lucide-react";
+import { BotanicalStageSignal } from "@/components/botanical/BotanicalSignals";
+import { determineJourneyStage } from "@/lib/journey-signals";
+import { type JourneyMeta } from "@/lib/journey-helpers";
 import { formatRelativeTime } from "@/lib/utils";
+import {
+  CheckCircle2,
+  MessageSquare,
+  ArrowRight,
+  Milestone,
+} from "lucide-react";
 
 export interface ExperienceItem {
   id: string;
@@ -23,12 +28,7 @@ export interface ExperienceItem {
   };
   tags: string[];
   outcomes_count: number;
-  journey?: {
-    total_updates: number;
-    latest_days_after: number | null;
-    latest_update_at: string | null;
-    is_long_running: boolean;
-  };
+  journey: JourneyMeta;
   comments_count: number;
   is_bookmarked?: boolean;
   created_at: string;
@@ -40,90 +40,124 @@ interface ExperienceCardProps {
 
 export function ExperienceCard({ experience }: ExperienceCardProps) {
   const relativeTime = formatRelativeTime(experience.created_at);
+  const { totalUpdates, latestDaysAfter, daysSinceStart } = experience.journey;
+  const currentDay = latestDaysAfter !== null ? latestDaysAfter : daysSinceStart;
 
-  const totalUpdates = experience.journey?.total_updates ?? experience.outcomes_count;
-  const latestDays = experience.journey?.latest_days_after ?? null;
-  const isLongRunning = experience.journey?.is_long_running ?? false;
+  // Formatted Day representation
+  const dayText = `Day ${currentDay}`;
+
+  // Deterministically classify the journey's subtle botanical signal
+  const stage = determineJourneyStage(experience);
 
   return (
-    <article className="group rounded-xl border border-border bg-surface-card p-4 transition-all duration-150 hover:border-primary/40 hover:bg-surface-card/80 hover:shadow-md hover:shadow-black/20">
-      {/* Top Header: Author & Category & Time */}
-      <div className="flex items-center justify-between gap-2 mb-2.5">
-        <div className="flex items-center space-x-2 min-w-0">
-          <Link
-            href={`/u/${experience.author.username}`}
-            className="flex items-center space-x-2 shrink-0 group-hover:opacity-90"
-          >
-            <UserAvatar username={experience.author.username} size="sm" />
-            <span className="text-xs font-semibold text-foreground truncate hover:underline">
-              @{experience.author.username}
-            </span>
+    <article className="group relative rounded-xl glass-card glass-card-hover p-5 sm:p-6 flex flex-col gap-4">
+      {/* Header: Author Info + Category + Subtle Corner Signal */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Link href={`/u/${experience.author.username}`} className="shrink-0">
+            <UserAvatar username={experience.author.username} size="md" />
           </Link>
 
-          <span className="text-muted-foreground/40 text-xs">•</span>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Link
+                href={`/u/${experience.author.username}`}
+                className="font-sans text-sm font-semibold text-[#F1F5F9] hover:text-[#4DA3FF] transition-colors"
+              >
+                @{experience.author.username}
+              </Link>
+              <span className="text-[#64748B] text-xs">•</span>
+              <span className="text-xs text-[#94A3B8]">
+                {relativeTime}
+              </span>
+            </div>
 
-          <Link
-            href={`/?category=${encodeURIComponent(experience.category.name.toLowerCase())}`}
-            className="shrink-0"
-          >
-            <Badge
-              variant="outline"
-              className="text-[10px] py-0 px-2 font-medium bg-primary/5 text-primary border-primary/20 hover:bg-primary/10 transition-colors"
-            >
-              {experience.category.name}
-            </Badge>
-          </Link>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full bg-white/[0.04] text-[#94A3B8] border border-white/[0.06]">
+                {experience.category.name}
+              </span>
+              {experience.tags.slice(0, 2).map((t) => (
+                <span
+                  key={t}
+                  className="text-[11px] text-[#64748B] hover:text-[#94A3B8] transition-colors"
+                >
+                  #{t}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center space-x-1 text-[11px] text-muted-foreground shrink-0">
-          <Clock className="h-3 w-3" />
-          <span>{relativeTime}</span>
+        {/* Journey Day & Subtle Botanical Stage Signal */}
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-white/[0.04] text-[#93C5FD] border border-white/[0.08] shadow-xs">
+            {dayText}
+          </span>
+          <BotanicalStageSignal stage={stage} size="sm" />
         </div>
       </div>
 
-      {/* Main Content: Title & Excerpt */}
-      <div className="space-y-1.5 mb-3">
-        <Link href={`/experiences/${experience.id}`} className="block">
-          <h2 className="text-sm sm:text-base font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
+      {/* Main Narrative / Decision Content */}
+      <div className="space-y-1.5">
+        <Link href={`/experiences/${experience.id}`} className="block group-hover:text-[#93C5FD] transition-colors">
+          <h3 className="font-sans text-base sm:text-lg font-bold text-[#F1F5F9] leading-snug">
             {experience.title}
-          </h2>
+          </h3>
         </Link>
-        <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+        <p className="font-sans text-xs sm:text-sm text-[#94A3B8] leading-relaxed line-clamp-3">
           {experience.story_preview}
         </p>
       </div>
 
-      {/* Tags List */}
-      {experience.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {experience.tags.map((tag) => (
-            <TagBadge key={tag} name={tag} />
-          ))}
+      {/* Outcome Milestones Preview (if any checkpoints logged) */}
+      {experience.outcomes_count > 0 && (
+        <div className="rounded-lg bg-black/40 p-3 border border-white/[0.06] flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs text-[#CBD5E1]">
+            <CheckCircle2 className="h-4 w-4 text-[#4DA3FF] shrink-0" />
+            <span className="font-medium">
+              {experience.outcomes_count} Outcome Checkpoint{experience.outcomes_count !== 1 ? "s" : ""} Recorded
+            </span>
+          </div>
+          <Link
+            href={`/experiences/${experience.id}#outcomes`}
+            className="text-xs text-[#4DA3FF] hover:text-[#7DD3FC] font-medium inline-flex items-center gap-1 transition-colors"
+          >
+            <span>View Timeline</span>
+            <ArrowRight className="h-3 w-3" />
+          </Link>
         </div>
       )}
 
-      {/* Card Footer: Living Journey Progress Badge, Comments & Bookmark Action */}
-      <div className="flex items-center justify-between border-t border-border/40 pt-2.5 mt-2">
-        <div className="flex items-center space-x-3 text-xs text-muted-foreground">
-          {/* Journey Progress Indicator */}
-          <JourneyProgressBadge
-            totalUpdates={totalUpdates}
-            latestDaysAfter={latestDays}
-            isLongRunning={isLongRunning}
-          />
-
-          {/* Comments count */}
-          <span className="inline-flex items-center space-x-1 text-[11px]">
-            <MessageSquare className="h-3.5 w-3.5" />
-            <span>{experience.comments_count}</span>
+      {/* Footer Actions & Metadata */}
+      <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-xs text-[#64748B]">
+        <div className="flex items-center gap-4">
+          <span className="inline-flex items-center gap-1 text-[#94A3B8]">
+            <Milestone className="h-3.5 w-3.5 text-[#64748B]" />
+            <span>{totalUpdates} Update{totalUpdates !== 1 ? "s" : ""}</span>
           </span>
+
+          <Link
+            href={`/experiences/${experience.id}#comments`}
+            className="inline-flex items-center gap-1 text-[#94A3B8] hover:text-[#F1F5F9] transition-colors"
+          >
+            <MessageSquare className="h-3.5 w-3.5 text-[#64748B]" />
+            <span>{experience.comments_count}</span>
+          </Link>
         </div>
 
-        {/* Bookmark Button */}
-        <BookmarkButton
-          experienceId={experience.id}
-          initialBookmarked={experience.is_bookmarked}
-        />
+        <div className="flex items-center gap-3">
+          <BookmarkButton
+            experienceId={experience.id}
+            initialBookmarked={experience.is_bookmarked}
+          />
+          <Link
+            href={`/experiences/${experience.id}`}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-[#4DA3FF] hover:text-[#7DD3FC] transition-colors"
+          >
+            <span>Read Journey</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
       </div>
     </article>
   );

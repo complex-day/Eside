@@ -116,11 +116,17 @@ None
   - Implemented automatic elapsed-day calculation from story creation date on client and server (`days_after` optional in `createOutcomeSchema`).
   - Added optional custom day offset toggle for documenting retroactive journey checkpoints.
   - Integrated dynamic delta duration badges (`+2 days later`, `+3 weeks later`, `+2 months later`) on `OutcomeMilestoneCard`.
-- **Multi-Dimensional Discovery Feed**:
+- **Multi-Dimensional Discovery Feed & Search**:
   - `FeedTabs`: Smooth switching between **Latest Stories** (`sort=latest`) and **🔥 Recently Updated Journeys** (`sort=recently_updated`).
   - `JourneyFilterPills`: Deep-linkable journey depth filter chips (`All Stories`, `🚀 Active Journeys (1+)`, `⏳ Long-running (90d+)`).
   - `JourneyProgressBadge`: Visual journey progress indicators on `ExperienceCard` items in public feeds.
+  - `FeedSearchBar`: Debounced (300ms) URL-driven search across title, story text, category, and tags with PostgreSQL `ilike` and contextual empty states.
   - Optimized composite index `idx_outcomes_experience_recency` for sub-500ms feed query performance.
+- **Stage Checkpoints & Terminal Outcome Sub-Picker**:
+  - Maintained 4 clean top-level stage cards (`🌻 Progress Update`, `🪻 Learning & Build`, `🍁 Turning Point / Pivot`, `🪷 Resolved Outcome`).
+  - Neutralized 4th card description to *"Where this journey landed — good, bad, or unclear"*.
+  - Nested progressive disclosure sub-picker for terminal journey states: `🪷 Validated Outcome`, `🍂 Hard Lesson / Cautionary Tale`, and `⏳ Verdict Unclear`.
+  - Upgraded timeline cards, status badges, and inline milestone editors to honestly reflect negative and inconclusive endings with dignified, calm earth/slate styling.
 - **Documentation**:
   - `knowledge/M6-living-outcome-journeys.md` containing full architecture decisions, migration diffs, and rebuild guide.
 

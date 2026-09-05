@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
       limit: searchParams.get("limit") ?? 10,
       category: searchParams.get("category") ?? undefined,
       tag: searchParams.get("tag") ?? undefined,
+      q: searchParams.get("q") ?? undefined,
       sort: searchParams.get("sort") ?? "latest",
       journey: searchParams.get("journey") ?? "all",
     });
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { page, limit, category, tag, sort, journey } = parsedQuery.data;
+    const { page, limit, category, tag, q, sort, journey } = parsedQuery.data;
     const offset = (page - 1) * limit;
 
     const supabase = await createClient();
@@ -207,7 +208,41 @@ export async function GET(request: NextRequest) {
       combinedFilteredIds = orderedIds;
     }
 
-    // 6. Build main experiences query
+    // 6. Resolve search query keywords across tags and categories
+    let qTagExpIds: string[] = [];
+    let qCategoryIds: string[] = [];
+
+    if (q) {
+      const sanitizedQ = q.replace(/[,()]/g, " ").trim();
+      if (sanitizedQ) {
+        const [tagMatches, catMatches] = await Promise.all([
+          supabase
+            .from("tags")
+            .select("id")
+            .ilike("name", `%${sanitizedQ}%`),
+          supabase
+            .from("categories")
+            .select("id")
+            .ilike("name", `%${sanitizedQ}%`),
+        ]);
+
+        if (tagMatches.data && tagMatches.data.length > 0) {
+          const tagIds = tagMatches.data.map((t) => t.id);
+          const { data: tagLinks } = await supabase
+            .from("experience_tags")
+            .select("experience_id")
+            .in("tag_id", tagIds);
+
+          qTagExpIds = Array.from(new Set(tagLinks?.map((tl) => tl.experience_id) ?? []));
+        }
+
+        if (catMatches.data && catMatches.data.length > 0) {
+          qCategoryIds = catMatches.data.map((c) => c.id);
+        }
+      }
+    }
+
+    // 7. Build main experiences query
     let dbQuery = supabase
       .from("experiences")
       .select(
@@ -254,6 +289,25 @@ export async function GET(request: NextRequest) {
 
     if (combinedFilteredIds !== null && combinedFilteredIds.length > 0) {
       dbQuery = dbQuery.in("id", combinedFilteredIds);
+    }
+
+    if (q) {
+      const sanitizedQ = q.replace(/[,()]/g, " ").trim();
+      if (sanitizedQ) {
+        const orParts = [
+          `title.ilike.%${sanitizedQ}%`,
+          `story.ilike.%${sanitizedQ}%`,
+        ];
+
+        if (qCategoryIds.length > 0) {
+          orParts.push(`category_id.in.(${qCategoryIds.join(",")})`);
+        }
+        if (qTagExpIds.length > 0) {
+          orParts.push(`id.in.(${qTagExpIds.join(",")})`);
+        }
+
+        dbQuery = dbQuery.or(orParts.join(","));
+      }
     }
 
     if (sort === "latest") {

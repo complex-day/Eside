@@ -34,7 +34,7 @@ export function ExperienceDetailActions({
 
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.error?.message || "Failed to archive experience.");
+        setError(json.error?.message || "Failed to archive decision.");
         setIsDeleting(false);
         return;
       }
@@ -42,7 +42,7 @@ export function ExperienceDetailActions({
       router.push("/profile");
       router.refresh();
     } catch {
-      setError("An unexpected error occurred while deleting.");
+      setError("An unexpected error occurred while archiving.");
       setIsDeleting(false);
     }
   };
@@ -54,7 +54,7 @@ export function ExperienceDetailActions({
           experienceId={experienceId}
           initialBookmarked={isBookmarked}
           showText
-          className="border border-border bg-surface-card px-3 py-1.5 rounded-lg text-xs"
+          className="border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 rounded-lg text-xs hover:bg-white/[0.06] text-[#94A3B8] hover:text-[#F1F5F9] transition-colors"
         />
 
         {isAuthor && (
@@ -63,11 +63,11 @@ export function ExperienceDetailActions({
               asChild
               variant="outline"
               size="sm"
-              className="h-8 px-3 text-xs border-border bg-surface-card hover:bg-surface-elevated text-muted-foreground hover:text-foreground"
+              className="h-8 px-3 text-xs border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] text-[#CBD5E1] hover:text-[#F1F5F9] transition-colors rounded-lg"
             >
               <Link href={`/experiences/${experienceId}/edit`}>
-                <Edit3 className="h-3.5 w-3.5 mr-1.5" />
-                Edit
+                <Edit3 className="h-3.5 w-3.5 mr-1.5 text-[#4DA3FF]" />
+                Edit Journey
               </Link>
             </Button>
 
@@ -75,7 +75,7 @@ export function ExperienceDetailActions({
               variant="outline"
               size="sm"
               onClick={() => setShowConfirm(true)}
-              className="h-8 px-3 text-xs border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive/60"
+              className="h-8 px-3 text-xs border-rose-500/20 text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/40 transition-colors rounded-lg"
             >
               <Trash2 className="h-3.5 w-3.5 mr-1.5" />
               Archive
@@ -85,15 +85,15 @@ export function ExperienceDetailActions({
       </div>
 
       {showConfirm && (
-        <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs space-y-2">
-          <div className="flex items-start space-x-2 text-destructive">
-            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-            <p className="leading-snug">
-              Are you sure you want to archive this experience? It will be removed from the public feed and preserved as read-only in your profile archive.
+        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 text-xs space-y-2.5">
+          <div className="flex items-start space-x-2 text-rose-300">
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-400" />
+            <p className="leading-relaxed">
+              Are you sure you want to archive this journey? It will be removed from public discovery and preserved as read-only in your profile archive.
             </p>
           </div>
 
-          {error && <p className="text-destructive font-medium">{error}</p>}
+          {error && <p className="text-rose-400 font-medium">{error}</p>}
 
           <div className="flex items-center space-x-2 justify-end pt-1">
             <Button
@@ -101,16 +101,15 @@ export function ExperienceDetailActions({
               size="sm"
               disabled={isDeleting}
               onClick={() => setShowConfirm(false)}
-              className="h-7 text-xs px-2.5"
+              className="h-7 text-xs px-2.5 border-white/10 bg-white/[0.03] text-[#F1F5F9] hover:bg-white/[0.06]"
             >
               Cancel
             </Button>
             <Button
-              variant="destructive"
               size="sm"
               disabled={isDeleting}
               onClick={handleDelete}
-              className="h-7 text-xs px-2.5"
+              className="h-7 text-xs px-2.5 bg-rose-600 hover:bg-rose-700 text-white font-medium"
             >
               {isDeleting ? (
                 <>

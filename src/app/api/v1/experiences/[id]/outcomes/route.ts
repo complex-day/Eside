@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createOutcomeSchema } from "@/lib/validations/outcome";
+import { calculateCalendarDaysDifference } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -235,12 +236,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const { days_after, content } = parsed.data;
 
-    // Auto-calculate elapsed days from story creation date if not explicitly specified
+    // Auto-calculate elapsed calendar days from story creation date if not explicitly specified
     let computedDaysAfter = days_after;
     if (computedDaysAfter === undefined || computedDaysAfter === null) {
-      const storyStartMs = new Date(experience.created_at).getTime();
-      const nowMs = Date.now();
-      computedDaysAfter = Math.max(0, Math.floor((nowMs - storyStartMs) / (1000 * 60 * 60 * 24)));
+      computedDaysAfter = calculateCalendarDaysDifference(experience.created_at);
     }
 
     // 4. Insert journey outcome update

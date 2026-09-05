@@ -8,9 +8,15 @@ import { OutcomeTimeline } from "@/components/outcomes/OutcomeTimeline";
 import { type OutcomeItem } from "@/components/outcomes/OutcomeMilestoneCard";
 import { CommentSection } from "@/components/comments/CommentSection";
 import { type CommentItem } from "@/components/comments/CommentCard";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Clock } from "lucide-react";
-import { formatRelativeTime, formatFullDate } from "@/lib/utils";
+import { BotanicalStageSignal } from "@/components/botanical/BotanicalSignals";
+import { determineJourneyStage } from "@/lib/journey-signals";
+import { calculateJourneyMeta } from "@/lib/journey-helpers";
+import {
+  ArrowLeft,
+  Calendar,
+  CheckCircle2,
+} from "lucide-react";
+import { formatFullDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -107,7 +113,7 @@ export default async function ExperienceDetailPage({ params }: ExperiencePagePro
 
   const isAuthor = user?.id === exp.author_id;
 
-  // Access control: if not active or deleted, only author can view
+  // Access control
   if (exp.deleted_at !== null && !isAuthor) {
     notFound();
   }
@@ -134,13 +140,26 @@ export default async function ExperienceDetailPage({ params }: ExperiencePagePro
     .map((et) => et.tag?.name)
     .filter((t): t is string => Boolean(t));
 
-  const initialOutcomes: OutcomeItem[] = (outcomesResult.data ?? []).map((o) => ({
+  const rawOutcomes = outcomesResult.data ?? [];
+  const initialOutcomes: OutcomeItem[] = rawOutcomes.map((o) => ({
     id: o.id,
     experience_id: o.experience_id,
     days_after: o.days_after,
     content: o.content,
     created_at: o.created_at,
   }));
+
+  const journeyMeta = calculateJourneyMeta(initialOutcomes, exp.created_at, exp.story);
+  const currentDay =
+    journeyMeta.latestDaysAfter !== null
+      ? journeyMeta.latestDaysAfter
+      : journeyMeta.daysSinceStart;
+
+  const stage = determineJourneyStage({
+    outcomes_count: initialOutcomes.length,
+    category: { name: categoryData?.name },
+    journey: journeyMeta,
+  });
 
   const initialComments: CommentItem[] = (commentsResult.data ?? []).map((c) => {
     const commentAuthor = c.author;
@@ -160,16 +179,15 @@ export default async function ExperienceDetailPage({ params }: ExperiencePagePro
     };
   });
 
-  const relativeTime = formatRelativeTime(exp.created_at);
   const formattedFullDate = formatFullDate(exp.created_at);
 
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-6">
-      {/* Top Navigation */}
+    <div className="w-full max-w-4xl mx-auto space-y-8 pb-16">
+      {/* Top Back Navigation & Bookmark Actions */}
       <div className="flex items-center justify-between">
         <Link
           href="/"
-          className="inline-flex items-center text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className="inline-flex items-center text-xs font-semibold text-[#94A3B8] hover:text-[#F1F5F9] transition-colors"
         >
           <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
           Back to Feed
@@ -182,102 +200,102 @@ export default async function ExperienceDetailPage({ params }: ExperiencePagePro
         />
       </div>
 
-      {/* Main Experience Article */}
-      <article className="rounded-2xl border border-border bg-surface-card p-6 sm:p-8 space-y-6 shadow-sm">
-        {/* Status / Category / Date meta */}
+      {/* SECTION 1: JOURNEY HEADER */}
+      <header className="flex flex-col gap-4 pb-6 border-b border-white/[0.08]">
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          {exp.status === "hidden" && (
-            <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30 font-medium">
-              Draft (Private)
-            </Badge>
-          )}
-
-          {exp.deleted_at !== null && (
-            <Badge variant="destructive" className="font-medium">
-              Archived
-            </Badge>
-          )}
-
-          <Link href={`/?category=${encodeURIComponent((categoryData?.name ?? "general").toLowerCase())}`}>
-            <Badge
-              variant="outline"
-              className="bg-primary/10 text-primary border-primary/30 hover:bg-primary/20 transition-colors font-semibold"
-            >
-              {categoryData?.name ?? "General"}
-            </Badge>
-          </Link>
-
-          <span className="text-muted-foreground/40">•</span>
-
-          <span className="inline-flex items-center space-x-1 text-muted-foreground">
-            <Clock className="h-3.5 w-3.5 mr-1" />
-            <span title={formattedFullDate}>{relativeTime}</span>
-          </span>
-        </div>
-
-        {/* Title */}
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-foreground leading-tight">
-          {exp.title}
-        </h1>
-
-        {/* Author Strip */}
-        <div className="flex items-center justify-between border-y border-border/40 py-3">
           <Link
-            href={`/u/${authorData?.username ?? "anonymous"}`}
-            className="flex items-center space-x-3 group"
+            href={`/?category=${encodeURIComponent(categoryData?.name ?? "")}`}
+            className="font-medium px-2.5 py-0.5 rounded-full bg-white/[0.04] text-[#93C5FD] border border-white/[0.08] hover:text-white transition-colors"
           >
-            <UserAvatar username={authorData?.username ?? "anonymous"} size="md" />
-            <div>
-              <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
-                @{authorData?.username ?? "Anonymous"}
-              </p>
-              {authorData?.bio ? (
-                <p className="text-[11px] text-muted-foreground line-clamp-1">
-                  {authorData.bio}
-                </p>
-              ) : (
-                <p className="text-[11px] text-muted-foreground">
-                  Anonymous Contributor
-                </p>
-              )}
-            </div>
+            {categoryData?.name ?? "General"}
           </Link>
+          <span className="text-[#64748B]">•</span>
+          <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-white/[0.04] text-[#93C5FD] border border-white/[0.08]">
+            Day {currentDay}
+          </span>
+          <BotanicalStageSignal stage={stage} size="sm" showMeaning={true} />
         </div>
 
-        {/* Story Narrative */}
-        <div className="prose prose-invert max-w-none text-xs sm:text-sm text-foreground/90 leading-relaxed sm:leading-loose whitespace-pre-line space-y-4">
-          {exp.story}
+        <div className="space-y-2">
+          <h1 className="font-sans text-2xl sm:text-3xl font-extrabold tracking-tight text-[#F1F5F9] leading-tight">
+            {exp.title}
+          </h1>
+
+          <div className="flex flex-wrap items-center gap-3 text-xs text-[#94A3B8] pt-1">
+            <Link
+              href={`/u/${authorData?.username ?? "anonymous"}`}
+              className="flex items-center gap-2 text-[#F1F5F9] font-semibold hover:text-[#4DA3FF] transition-colors"
+            >
+              <UserAvatar username={authorData?.username ?? "anonymous"} size="xs" />
+              <span>@{authorData?.username ?? "anonymous"}</span>
+            </Link>
+            <span className="text-[#64748B]">•</span>
+            <span className="flex items-center gap-1">
+              <Calendar className="h-3.5 w-3.5 text-[#64748B]" />
+              <span>{formattedFullDate}</span>
+            </span>
+            <span className="text-[#64748B]">•</span>
+            <span className="flex items-center gap-1 text-[#4DA3FF]">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              <span>{initialOutcomes.length} Checkpoint{initialOutcomes.length !== 1 ? "s" : ""}</span>
+            </span>
+          </div>
         </div>
 
         {/* Tags */}
         {tags.length > 0 && (
-          <div className="border-t border-border/40 pt-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
-              Related Tags
-            </h3>
-            <div className="flex flex-wrap gap-1.5">
-              {tags.map((tag) => (
-                <TagBadge key={tag} name={tag} />
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {tags.map((tag) => (
+              <TagBadge key={tag} name={tag} />
+            ))}
           </div>
         )}
+      </header>
 
-        {/* Milestone 6: Living Outcome Journey Timeline */}
+      {/* SECTION 2: ORIGINAL STORY / DECISION */}
+      <section className="rounded-xl glass-card p-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+          <h2 className="text-sm font-semibold text-[#F1F5F9] uppercase tracking-wide">
+            Initial Decision &amp; Context
+          </h2>
+          <span className="text-xs text-[#64748B] font-mono">Day 0 • 🌼 Seed</span>
+        </div>
+
+        <div className="text-sm sm:text-base text-[#CBD5E1] leading-relaxed whitespace-pre-line">
+          {exp.story}
+        </div>
+      </section>
+
+      {/* SECTION 3: OUTCOME TIMELINE */}
+      <div id="outcomes">
         <OutcomeTimeline
           experienceId={exp.id}
           initialOutcomes={initialOutcomes}
           isAuthor={isAuthor}
           storyCreatedAt={exp.created_at}
         />
+      </div>
 
-        {/* Milestone 5: Discussion & Comments Section */}
+      {/* SECTION 4: COMMENTS & DISCUSSION */}
+      <div id="comments" className="pt-6 border-t border-white/[0.08]">
+        <div className="mb-4">
+          <h2 className="text-base sm:text-lg font-bold text-[#F1F5F9] flex items-center gap-2">
+            <span>Discussion &amp; Advice</span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/[0.04] text-[#94A3B8]">
+              {initialComments.length}
+            </span>
+          </h2>
+          <p className="text-xs text-[#94A3B8] mt-0.5">
+            Ask questions, share perspectives, or discuss the trajectory of this journey.
+          </p>
+        </div>
+
         <CommentSection
           experienceId={exp.id}
           initialComments={initialComments}
           isAuthenticated={Boolean(user)}
         />
-      </article>
+      </div>
     </div>
   );
 }

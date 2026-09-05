@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/shared/UserAvatar";
+import { EsideLogo } from "@/components/shared/EsideLogo";
 import { createClient } from "@/lib/supabase/client";
-import { LogOut, User as UserIcon, Loader2 } from "lucide-react";
+import { LogOut, Plus } from "lucide-react";
 
 interface HeaderProps {
   user?: {
@@ -29,7 +30,6 @@ export function Header({ user }: HeaderProps) {
       router.push("/login");
       router.refresh();
     } catch {
-      // Force refresh on error
       router.push("/");
       router.refresh();
     } finally {
@@ -38,68 +38,86 @@ export function Header({ user }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-background/90 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4 sm:px-6">
+    <header className="sticky top-0 z-40 w-full border-b border-white/[0.08] bg-[#050505]/85 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
         {/* Brand Logo & Name */}
-        <Link href="/" className="flex items-center space-x-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-mono text-sm font-bold text-white shadow-md shadow-primary/25">
-            E
-          </div>
-          <div className="flex flex-col">
-            <span className="font-sans text-base font-bold tracking-tight text-foreground">
+        <div className="flex items-center gap-6">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <EsideLogo size={28} className="transition-transform group-hover:scale-105" />
+            <span className="font-sans text-lg font-bold tracking-tight text-[#F1F5F9]">
               Eside
             </span>
-            <span className="hidden text-[10px] font-medium text-muted-foreground sm:inline-block">
-              Learn from real outcomes
-            </span>
-          </div>
-        </Link>
+          </Link>
+
+          {/* Desktop Nav Links */}
+          <nav className="hidden md:flex items-center gap-5 text-sm font-medium">
+            <Link
+              href="/"
+              className="text-[#F1F5F9] hover:text-[#4DA3FF] transition-colors"
+            >
+              Journeys
+            </Link>
+            <Link
+              href="/?sort=recently_updated"
+              className="text-[#94A3B8] hover:text-[#F1F5F9] transition-colors"
+            >
+              Recently Updated
+            </Link>
+          </nav>
+        </div>
 
         {/* Header Right Actions */}
-        <div className="flex items-center space-x-2.5">
+        <div className="flex items-center gap-3 sm:gap-4">
           {user ? (
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <Link
-                href="/profile"
-                className="flex items-center space-x-2 rounded-full p-1 pr-2.5 hover:bg-slate-800/60 transition-colors"
-              >
-                <UserAvatar username={user.username} size="sm" />
-                <span className="hidden text-xs font-semibold text-foreground sm:inline-block">
-                  @{user.username || "anonymous"}
-                </span>
-              </Link>
-
-              <Link href="/profile">
-                <Button variant="outline" size="sm" className="h-8 text-xs px-2.5">
-                  <UserIcon className="h-3.5 w-3.5 sm:mr-1.5" />
-                  <span className="hidden sm:inline">Profile</span>
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              {/* Post Journey CTA */}
+              <Link href="/experiences/new">
+                <Button
+                  size="sm"
+                  className="h-8 text-xs font-semibold px-3 rounded-lg bg-[#4DA3FF] text-black hover:bg-[#60A5FA] shadow-sm border-0 transition-all flex items-center gap-1.5"
+                >
+                  <Plus className="h-4 w-4 stroke-[2.5]" />
+                  <span>Start Journey</span>
                 </Button>
               </Link>
 
+              {/* User Identity */}
+              <Link
+                href="/profile"
+                className="flex items-center gap-2 rounded-full py-1 px-1.5 hover:bg-white/[0.04] transition-colors group"
+              >
+                <div className="hidden sm:flex flex-col items-end">
+                  <span className="text-xs font-semibold text-[#F1F5F9] leading-tight group-hover:text-[#4DA3FF]">
+                    @{user.username || "profile"}
+                  </span>
+                </div>
+                <UserAvatar username={user.username} size="sm" />
+              </Link>
+
+              {/* Log out */}
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 text-xs px-2 text-muted-foreground hover:text-destructive"
+                className="h-8 w-8 p-0 text-[#94A3B8] hover:text-rose-400 hover:bg-white/[0.04]"
                 onClick={handleLogout}
                 disabled={isLoggingOut}
                 title="Log out"
               >
-                {isLoggingOut ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <LogOut className="h-3.5 w-3.5" />
-                )}
+                <LogOut className="h-4 w-4" />
               </Button>
             </div>
           ) : (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <Link href="/login">
-                <Button variant="ghost" size="sm" className="h-8 text-xs font-medium">
+                <Button variant="ghost" size="sm" className="h-8 text-xs font-medium text-[#94A3B8] hover:text-[#F1F5F9]">
                   Log in
                 </Button>
               </Link>
               <Link href="/register">
-                <Button variant="default" size="sm" className="h-8 text-xs font-semibold">
+                <Button
+                  size="sm"
+                  className="h-8 text-xs font-semibold px-3.5 bg-[#4DA3FF] text-black hover:bg-[#60A5FA] shadow-sm rounded-lg"
+                >
                   Sign up
                 </Button>
               </Link>

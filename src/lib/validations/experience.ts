@@ -80,6 +80,7 @@ export const feedQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).optional().default(10),
   category: z.string().optional(),
   tag: z.string().optional(),
+  q: z.string().trim().max(100).optional(),
   sort: z.enum(["latest", "recently_updated"]).optional().default("latest"),
   journey: z.enum(["all", "active", "long_running"]).optional().default("all"),
 });

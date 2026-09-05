@@ -88,7 +88,7 @@ export default function EditExperiencePage({ params }: EditExperiencePageProps) 
         }
 
         if (!expRes.ok || !expJson.success) {
-          setServerError(expJson.error?.message || "Failed to load experience.");
+          setServerError(expJson.error?.message || "Failed to load decision details.");
           setInitialLoading(false);
           return;
         }
@@ -110,7 +110,7 @@ export default function EditExperiencePage({ params }: EditExperiencePageProps) 
           setTags(data.tags);
         }
       } catch {
-        setServerError("Failed to load experience details.");
+        setServerError("Failed to load decision details.");
       } finally {
         setInitialLoading(false);
       }
@@ -156,7 +156,7 @@ export default function EditExperiencePage({ params }: EditExperiencePageProps) 
 
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setServerError(json.error?.message || "Failed to update experience.");
+        setServerError(json.error?.message || "Failed to update decision.");
         return;
       }
 
@@ -180,7 +180,7 @@ export default function EditExperiencePage({ params }: EditExperiencePageProps) 
 
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setServerError(json.error?.message || "Failed to archive experience.");
+        setServerError(json.error?.message || "Failed to archive decision.");
         setIsDeleting(false);
         return;
       }
@@ -197,7 +197,7 @@ export default function EditExperiencePage({ params }: EditExperiencePageProps) 
     return (
       <div className="flex flex-col items-center justify-center p-12 space-y-3">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        <p className="text-xs text-muted-foreground">Loading experience details...</p>
+        <p className="text-xs text-slate-400">Loading decision details...</p>
       </div>
     );
   }
@@ -206,47 +206,45 @@ export default function EditExperiencePage({ params }: EditExperiencePageProps) 
     <div className="w-full max-w-2xl mx-auto space-y-4">
       <Link
         href={`/experiences/${id}`}
-        className="inline-flex items-center text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+        className="inline-flex items-center text-xs font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors"
       >
         <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
-        Cancel & Back to Experience
+        Cancel & Back to Journey
       </Link>
 
-      <Card className="border-border bg-surface-card shadow-lg shadow-black/20">
-        <CardHeader className="space-y-1.5 pb-4 border-b border-border/40">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <Edit3 className="h-4 w-4" />
-              </div>
-              <div>
-                <CardTitle className="text-lg sm:text-xl font-bold tracking-tight">
-                  Edit Experience
-                </CardTitle>
-                <CardDescription className="text-xs text-muted-foreground">
-                  Update your narrative story, category, or publication status.
-                </CardDescription>
-              </div>
+      <div className="glass-card rounded-2xl border border-white/[0.08] overflow-hidden shadow-2xl">
+        <div className="p-5 sm:p-6 border-b border-white/[0.06] flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#4DA3FF]/10 text-[#4DA3FF] border border-[#4DA3FF]/20">
+              <Edit3 className="h-4 w-4" />
             </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDeleteConfirm(true)}
-              className="h-8 text-xs border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive/60"
-            >
-              <Trash2 className="h-3.5 w-3.5 mr-1" />
-              Archive
-            </Button>
+            <div>
+              <h1 className="text-base sm:text-lg font-bold text-[#F1F5F9] tracking-tight">
+                Edit Initial Decision
+              </h1>
+              <p className="text-xs text-[#94A3B8]">
+                Update your baseline hypothesis, context, domain, or publication status.
+              </p>
+            </div>
           </div>
-        </CardHeader>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowDeleteConfirm(true)}
+            className="h-8 text-xs border-rose-500/20 text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/40 rounded-lg transition-colors"
+          >
+            <Trash2 className="h-3.5 w-3.5 mr-1" />
+            Archive
+          </Button>
+        </div>
 
         {showDeleteConfirm && (
-          <div className="m-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs space-y-2">
-            <div className="flex items-start space-x-2 text-destructive">
-              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-              <p className="leading-snug">
-                Are you sure you want to archive this experience? It will be removed from the public feed and preserved as read-only in your profile archive.
+          <div className="m-5 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs space-y-2.5">
+            <div className="flex items-start space-x-2 text-rose-300">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-rose-400" />
+              <p className="leading-relaxed">
+                Are you sure you want to archive this journey? It will be removed from the public timeline feed and preserved as read-only in your profile archive.
               </p>
             </div>
 
@@ -256,16 +254,15 @@ export default function EditExperiencePage({ params }: EditExperiencePageProps) 
                 size="sm"
                 disabled={isDeleting}
                 onClick={() => setShowDeleteConfirm(false)}
-                className="h-7 text-xs px-2.5"
+                className="h-7 text-xs px-2.5 border-white/10 bg-white/[0.03] text-[#F1F5F9] hover:bg-white/[0.06]"
               >
                 Cancel
               </Button>
               <Button
-                variant="destructive"
                 size="sm"
                 disabled={isDeleting}
                 onClick={onArchive}
-                className="h-7 text-xs px-2.5"
+                className="h-7 text-xs px-2.5 bg-rose-600 hover:bg-rose-700 text-white font-medium"
               >
                 {isDeleting ? (
                   <>
@@ -281,9 +278,9 @@ export default function EditExperiencePage({ params }: EditExperiencePageProps) 
         )}
 
         <form onSubmit={handleSubmit(onUpdate)}>
-          <CardContent className="space-y-4 pt-4">
+          <div className="p-5 sm:p-6 space-y-4">
             {serverError && (
-              <div className="flex items-start space-x-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+              <div className="flex items-start space-x-2 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-400">
                 <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                 <span>{serverError}</span>
               </div>
@@ -292,77 +289,77 @@ export default function EditExperiencePage({ params }: EditExperiencePageProps) 
             {/* Title Input */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="title" className="text-xs font-semibold">
-                  Experience Title <span className="text-destructive">*</span>
+                <Label htmlFor="title" className="text-xs font-semibold text-[#F1F5F9]">
+                  Decision Title <span className="text-[#4DA3FF]">*</span>
                 </Label>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-[10px] text-[#64748B] font-mono">
                   {titleValue.length}/150
                 </span>
               </div>
               <Input
                 id="title"
-                placeholder="Experience Title"
-                className="h-9 text-xs sm:text-sm"
+                placeholder="What choice or hypothesis are you pursuing?"
+                className="h-9 text-xs sm:text-sm bg-black/60 border-white/[0.08] text-[#F1F5F9] focus-visible:ring-[#4DA3FF]"
                 maxLength={150}
                 {...register("title")}
               />
               {errors.title && (
-                <p className="text-[11px] text-destructive">{errors.title.message}</p>
+                <p className="text-[11px] text-rose-400">{errors.title.message}</p>
               )}
             </div>
 
             {/* Category Dropdown */}
             <div className="space-y-1.5">
-              <Label htmlFor="category_id" className="text-xs font-semibold">
-                Topic Category <span className="text-destructive">*</span>
+              <Label htmlFor="category_id" className="text-xs font-semibold text-[#F1F5F9]">
+                Domain / Category <span className="text-[#4DA3FF]">*</span>
               </Label>
               <select
                 id="category_id"
-                className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="w-full h-9 rounded-lg border border-white/[0.08] bg-black/60 px-3 py-1 text-xs text-[#F1F5F9] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#4DA3FF]"
                 {...register("category_id")}
               >
                 {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
+                  <option key={cat.id} value={cat.id} className="bg-[#0A0D14] text-[#F1F5F9]">
                     {cat.name}
                   </option>
                 ))}
               </select>
               {errors.category_id && (
-                <p className="text-[11px] text-destructive">{errors.category_id.message}</p>
+                <p className="text-[11px] text-rose-400">{errors.category_id.message}</p>
               )}
             </div>
 
             {/* Story Narrative */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="story" className="text-xs font-semibold">
-                  Story Narrative <span className="text-destructive">*</span>
+                <Label htmlFor="story" className="text-xs font-semibold text-[#F1F5F9]">
+                  Decision Narrative & Baseline Starting Conditions <span className="text-[#4DA3FF]">*</span>
                 </Label>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-[10px] text-[#64748B] font-mono">
                   {storyValue.length}/10,000
                 </span>
               </div>
               <textarea
                 id="story"
                 rows={8}
-                placeholder="Describe your situation in detail..."
-                className="w-full rounded-md border border-input bg-background p-3 text-xs sm:text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-y leading-relaxed"
+                placeholder="Document your thinking, reason for choosing this path, expected milestones, and initial baseline..."
+                className="w-full rounded-lg border border-white/[0.08] bg-black/60 p-3 text-xs sm:text-sm text-[#F1F5F9] shadow-sm placeholder:text-[#64748B] focus:outline-none focus:border-[#4DA3FF] focus:ring-1 focus:ring-[#4DA3FF] resize-y leading-relaxed"
                 maxLength={10000}
                 {...register("story")}
               />
               {errors.story && (
-                <p className="text-[11px] text-destructive">{errors.story.message}</p>
+                <p className="text-[11px] text-rose-400">{errors.story.message}</p>
               )}
             </div>
 
             {/* Tags Input */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="tags" className="text-xs font-semibold flex items-center space-x-1">
-                  <Tag className="h-3.5 w-3.5 text-muted-foreground mr-1" />
-                  Tags <span className="text-[10px] text-muted-foreground font-normal">(Optional, max 5)</span>
+                <Label htmlFor="tags" className="text-xs font-semibold text-[#F1F5F9] flex items-center space-x-1">
+                  <Tag className="h-3.5 w-3.5 text-[#64748B] mr-1" />
+                  Tags <span className="text-[10px] text-[#64748B] font-normal">(Optional, max 5)</span>
                 </Label>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-[10px] text-[#64748B] font-mono">
                   {tags.length}/5 tags
                 </span>
               </div>
@@ -372,9 +369,9 @@ export default function EditExperiencePage({ params }: EditExperiencePageProps) 
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleAddTag}
-                placeholder={tags.length >= 5 ? "Tag limit reached (max 5)" : "Type a tag and press Enter or comma..."}
+                placeholder={tags.length >= 5 ? "Tag limit reached (max 5)" : "Type a tag and press Enter..."}
                 disabled={tags.length >= 5}
-                className="h-9 text-xs"
+                className="h-9 text-xs bg-black/60 border-white/[0.08] text-[#F1F5F9] focus-visible:ring-[#4DA3FF]"
               />
 
               {tags.length > 0 && (
@@ -383,13 +380,13 @@ export default function EditExperiencePage({ params }: EditExperiencePageProps) 
                     <Badge
                       key={t}
                       variant="secondary"
-                      className="text-xs pl-2.5 pr-1.5 py-0.5 flex items-center space-x-1 bg-secondary text-secondary-foreground"
+                      className="text-xs pl-2.5 pr-1.5 py-0.5 flex items-center space-x-1 bg-white/[0.04] text-[#CBD5E1] border border-white/[0.08]"
                     >
                       <span>#{t}</span>
                       <button
                         type="button"
                         onClick={() => handleRemoveTag(t)}
-                        className="rounded-full p-0.5 hover:bg-surface-elevated text-muted-foreground hover:text-foreground"
+                        className="rounded-full p-0.5 hover:bg-white/10 text-[#64748B] hover:text-[#F1F5F9]"
                         aria-label={`Remove tag ${t}`}
                       >
                         ×
@@ -402,43 +399,43 @@ export default function EditExperiencePage({ params }: EditExperiencePageProps) 
 
             {/* Status Switcher (Published vs Draft) */}
             <div className="space-y-1.5 pt-1">
-              <Label className="text-xs font-semibold">Publication Visibility</Label>
+              <Label className="text-xs font-semibold text-[#F1F5F9]">Publication Visibility</Label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setValue("status", "active")}
-                  className={`rounded-lg border p-3 text-left text-xs transition-all ${
+                  className={`rounded-xl border p-3 text-left text-xs transition-all ${
                     statusValue === "active"
-                      ? "border-primary bg-primary/10 text-foreground"
-                      : "border-border bg-surface-card text-muted-foreground hover:bg-surface-elevated"
+                      ? "border-[#4DA3FF]/50 bg-[#4DA3FF]/10 text-[#F1F5F9]"
+                      : "border-white/[0.08] bg-black/40 text-[#94A3B8] hover:bg-white/[0.03]"
                   }`}
                 >
-                  <p className="font-semibold text-foreground">Published</p>
-                  <p className="text-[11px] text-muted-foreground">Visible on public feeds and discovery.</p>
+                  <p className="font-semibold text-[#F1F5F9]">Published</p>
+                  <p className="text-[11px] text-[#94A3B8]">Visible on longitudinal feed and public discovery.</p>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setValue("status", "hidden")}
-                  className={`rounded-lg border p-3 text-left text-xs transition-all ${
+                  className={`rounded-xl border p-3 text-left text-xs transition-all ${
                     statusValue === "hidden"
-                      ? "border-primary bg-primary/10 text-foreground"
-                      : "border-border bg-surface-card text-muted-foreground hover:bg-surface-elevated"
+                      ? "border-[#4DA3FF]/50 bg-[#4DA3FF]/10 text-[#F1F5F9]"
+                      : "border-white/[0.08] bg-black/40 text-[#94A3B8] hover:bg-white/[0.03]"
                   }`}
                 >
-                  <p className="font-semibold text-foreground">Draft (Private)</p>
-                  <p className="text-[11px] text-muted-foreground">Saved privately in your profile dashboard.</p>
+                  <p className="font-semibold text-[#F1F5F9]">Draft (Private)</p>
+                  <p className="text-[11px] text-[#94A3B8]">Saved privately in your personal profile journal.</p>
                 </button>
               </div>
             </div>
-          </CardContent>
+          </div>
 
-          <CardFooter className="flex items-center justify-end space-x-2 pt-2 border-t border-border/40">
+          <div className="flex items-center justify-end space-x-2 p-5 border-t border-white/[0.06] bg-black/30">
             <Button
               type="submit"
               size="sm"
               disabled={isSubmitting}
-              className="h-9 text-xs font-semibold"
+              className="h-8 text-xs font-semibold bg-[#4DA3FF] text-black hover:bg-[#60A5FA] px-4 rounded-lg shadow-sm"
             >
               {isSubmitting ? (
                 <>
@@ -452,9 +449,9 @@ export default function EditExperiencePage({ params }: EditExperiencePageProps) 
                 </>
               )}
             </Button>
-          </CardFooter>
+          </div>
         </form>
-      </Card>
+      </div>
     </div>
   );
 }

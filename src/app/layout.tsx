@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { TopProgressBar } from "@/components/shared/TopProgressBar";
 import "./globals.css";
 
 const inter = Inter({
@@ -15,9 +16,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Eside — Learn from Real Outcomes",
+  title: "Eside — The Longitudinal Journal of Decisions & Outcomes",
   description:
-    "An anonymous experience-sharing platform where people learn from real-life incidents, struggles, decisions, and long-term outcomes.",
+    "A thoughtful, anonymous platform to document dilemmas, track follow-up milestones, and learn from real-world outcomes.",
   icons: {
     icon: "/favicon.ico",
   },
@@ -27,7 +28,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#0F172A",
+  themeColor: "#050505",
 };
 
 export default function RootLayout({
@@ -38,8 +39,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} font-sans bg-background text-foreground min-h-screen flex flex-col`}
+        className={`${inter.variable} ${jetbrainsMono.variable} font-sans bg-[#050505] text-[#F1F5F9] min-h-screen flex flex-col`}
       >
+        <TopProgressBar />
         {children}
       </body>
     </html>

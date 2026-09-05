@@ -38,3 +38,7 @@ next-env.d.ts
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Agent Skills Reference Files
+.agents/skills/
+
