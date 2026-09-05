@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { X, ArrowRight } from "lucide-react";
 
@@ -14,15 +15,27 @@ export function CreateActionSheet({
   onClose,
   isAuthenticated = false,
 }: CreateActionSheetProps) {
+  // Lock background body scroll while action sheet is active
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 sm:p-4 backdrop-blur-md animate-in fade-in duration-150"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-2xl glass-card text-[#F1F5F9] p-6 shadow-2xl relative space-y-5 bg-[#090B0F]/95"
+        className="w-full max-w-lg max-h-[90dvh] overflow-y-auto rounded-2xl glass-card text-[#F1F5F9] p-5 sm:p-6 shadow-2xl relative space-y-5 bg-[#090B0F]/98 border border-white/[0.08]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

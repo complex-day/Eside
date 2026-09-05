@@ -28,7 +28,13 @@ export const metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function ProfilePage() {
+interface ProfilePageProps {
+  searchParams?: {
+    tab?: string;
+  };
+}
+
+export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -186,6 +192,13 @@ export default async function ProfilePage() {
     (exp) => (exp.outcomes || []).length > 0
   ).length || journeysStartedCount;
 
+  // Dynamic initial tab based on query param (e.g. ?tab=bookmarks)
+  const validTabs = ["published", "outcomes", "drafts", "bookmarks", "archived"];
+  const currentTab =
+    searchParams?.tab && validTabs.includes(searchParams.tab)
+      ? searchParams.tab
+      : "published";
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 pb-16">
       {/* Profile Header Card */}
@@ -278,7 +291,7 @@ export default async function ProfilePage() {
       </div>
 
       {/* Tabs & Content */}
-      <Tabs defaultValue="published" className="w-full space-y-4">
+      <Tabs key={currentTab} defaultValue={currentTab} className="w-full space-y-4">
         <div className="w-full overflow-x-auto no-scrollbar">
           <TabsList className="flex items-center gap-1.5 min-w-max p-1 bg-black/40 border border-white/[0.08] rounded-xl">
             <TabsTrigger value="published" className="py-1.5 px-3 text-xs rounded-lg data-[state=active]:bg-white/[0.08] data-[state=active]:text-[#F1F5F9] text-[#94A3B8]">

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Compass, Flame, Plus, Bookmark, User } from "lucide-react";
 import { CreateActionSheet } from "@/components/navigation/CreateActionSheet";
@@ -17,26 +17,33 @@ interface BottomNavProps {
 
 export function BottomNav({ user }: BottomNavProps = {}) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-  const isFeed = pathname === "/" || pathname === "/feed";
-  const isTopJourneys = pathname.includes("sort=recently_updated");
-  const isProfile = pathname === "/profile" || pathname.startsWith("/u/");
-  const isBookmarks = pathname === "/profile" && pathname.includes("tab=bookmarks");
+  const journeyParam = searchParams.get("journey");
+  const tabParam = searchParams.get("tab");
+
+  // Accurate active state matching for routes and query params
+  const isFeed = pathname === "/" && !journeyParam;
+  const isActiveJourneys = pathname === "/" && journeyParam === "active";
+  const isBookmarks = pathname === "/profile" && tabParam === "bookmarks";
+  const isJournal =
+    (pathname.startsWith("/profile") && tabParam !== "bookmarks") ||
+    pathname.startsWith("/u/");
 
   return (
     <>
       {/* Mobile Bottom Navigation Bar (Hidden on desktop md+) */}
       <nav
         aria-label="Mobile Navigation"
-        className="fixed bottom-0 inset-x-0 z-40 md:hidden bg-[#050505]/90 backdrop-blur-xl border-t border-white/[0.08] px-2 py-1.5 shadow-[0_-4px_24px_rgba(0,0,0,0.6)]"
+        className="fixed bottom-0 inset-x-0 z-40 md:hidden bg-[#050505]/95 backdrop-blur-xl border-t border-white/[0.08] px-2 py-1.5 shadow-[0_-4px_24px_rgba(0,0,0,0.6)]"
       >
         <div className="flex items-center justify-around max-w-md mx-auto relative">
-          {/* Feed */}
+          {/* 1. Journeys Feed */}
           <Link
             href="/"
             className={`flex flex-col items-center justify-center py-1 px-3 rounded-lg transition-colors ${
-              isFeed && !isTopJourneys
+              isFeed
                 ? "text-[#4DA3FF] font-semibold"
                 : "text-[#94A3B8] hover:text-[#F1F5F9]"
             }`}
@@ -45,11 +52,11 @@ export function BottomNav({ user }: BottomNavProps = {}) {
             <span className="text-[10px] font-medium mt-0.5">Journeys</span>
           </Link>
 
-          {/* Active Journeys */}
+          {/* 2. Active Journeys (1+ updates) */}
           <Link
             href="/?journey=active"
             className={`flex flex-col items-center justify-center py-1 px-3 rounded-lg transition-colors ${
-              pathname.includes("journey=active")
+              isActiveJourneys
                 ? "text-[#4DA3FF] font-semibold"
                 : "text-[#94A3B8] hover:text-[#F1F5F9]"
             }`}
@@ -58,7 +65,7 @@ export function BottomNav({ user }: BottomNavProps = {}) {
             <span className="text-[10px] font-medium mt-0.5">Active 🌻</span>
           </Link>
 
-          {/* Elevated Create / Action Center Trigger */}
+          {/* 3. Elevated Create / Action Center Trigger */}
           <div className="relative -top-3">
             <button
               onClick={() => setIsSheetOpen(true)}
@@ -69,9 +76,9 @@ export function BottomNav({ user }: BottomNavProps = {}) {
             </button>
           </div>
 
-          {/* Bookmarks */}
+          {/* 4. Saved Bookmarks */}
           <Link
-            href="/profile"
+            href="/profile?tab=bookmarks"
             className={`flex flex-col items-center justify-center py-1 px-3 rounded-lg transition-colors ${
               isBookmarks
                 ? "text-[#4DA3FF] font-semibold"
@@ -82,11 +89,11 @@ export function BottomNav({ user }: BottomNavProps = {}) {
             <span className="text-[10px] font-medium mt-0.5">Saved</span>
           </Link>
 
-          {/* Profile */}
+          {/* 5. Personal Journal Profile */}
           <Link
             href="/profile"
             className={`flex flex-col items-center justify-center py-1 px-3 rounded-lg transition-colors ${
-              isProfile && !isBookmarks
+              isJournal
                 ? "text-[#4DA3FF] font-semibold"
                 : "text-[#94A3B8] hover:text-[#F1F5F9]"
             }`}
