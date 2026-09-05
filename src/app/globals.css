@@ -52,16 +52,25 @@
   }
 }
 
-/* Glass Card & Surface Utilities */
+/* Glass Card & Surface Utilities (GPU & Mobile Optimized) */
 .glass-card {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(12, 15, 20, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transform: translateZ(0);
+}
+
+@media (max-width: 640px) {
+  .glass-card {
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    background: rgba(12, 15, 20, 0.88);
+  }
 }
 
 .glass-card-hover {
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
 
 .glass-card-hover:hover {
@@ -70,10 +79,11 @@
 }
 
 .glass-panel-deep {
-  background: rgba(9, 11, 15, 0.85);
+  background: rgba(9, 11, 15, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transform: translateZ(0);
 }
 
 /* Monospace & Typographic Utilities */

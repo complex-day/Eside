@@ -163,44 +163,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     }
   }
 
-  // 8. Handle Recently Updated Sort vs Latest Sort
-  let sortedCandidateIds: string[] | null = null;
-  if (sort === "recently_updated") {
-    let outcomeQuery = supabase
-      .from("outcomes")
-      .select("experience_id, created_at")
-      .order("created_at", { ascending: false });
-
-    if (combinedFilteredIds !== null) {
-      outcomeQuery = outcomeQuery.in("experience_id", combinedFilteredIds);
-    }
-
-    const { data: recentOutcomes } = await outcomeQuery;
-    const seen = new Set<string>();
-    const orderedIds: string[] = [];
-    for (const row of recentOutcomes ?? []) {
-      if (!seen.has(row.experience_id)) {
-        seen.add(row.experience_id);
-        orderedIds.push(row.experience_id);
-      }
-    }
-
-    if (orderedIds.length === 0) {
-      sortedCandidateIds = null;
-    } else {
-      sortedCandidateIds = orderedIds;
-      combinedFilteredIds = orderedIds;
-    }
-  }
-
-  // 9. Query active experiences
+  // 8. Query active experiences
   let experiences: ExperienceItem[] = [];
   let totalItems = 0;
 
   const isFilterEmpty =
     (selectedTag && tagFilteredIds?.length === 0) ||
     (journey !== "all" && journeyFilteredIds?.length === 0) ||
-    (sort === "recently_updated" && sortedCandidateIds !== null && sortedCandidateIds.length === 0) ||
     (combinedFilteredIds !== null && combinedFilteredIds.length === 0);
 
   if (!isFilterEmpty) {
@@ -272,9 +241,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       }
     }
 
-    if (sort === "latest") {
-      dbQuery = dbQuery.order("created_at", { ascending: false });
-    }
+    // Always order by created_at DESC as the base database ordering
+    dbQuery = dbQuery.order("created_at", { ascending: false });
 
     dbQuery = dbQuery.range(offset, offset + limit - 1);
 
@@ -282,12 +250,36 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     totalItems = count ?? 0;
 
     let orderedRows = rows ?? [];
-    if (sort === "recently_updated" && sortedCandidateIds) {
-      const orderMap = new Map(sortedCandidateIds.map((id, index) => [id, index]));
+
+    // Server-side strict enforcement for journey=active (must have >= 1 outcome)
+    if (journey === "active") {
+      orderedRows = orderedRows.filter(
+        (exp) => (exp.outcomes && exp.outcomes.length > 0)
+      );
+    } else if (journey === "long_running") {
+      orderedRows = orderedRows.filter(
+        (exp) =>
+          exp.outcomes &&
+          exp.outcomes.some((o) => (o.days_after ?? 0) >= 90)
+      );
+    }
+
+    // Sort by latest activity (most recent outcome update OR decision created_at)
+    if (sort === "recently_updated") {
       orderedRows = [...orderedRows].sort((a, b) => {
-        const orderA = orderMap.get(a.id) ?? 999999;
-        const orderB = orderMap.get(b.id) ?? 999999;
-        return orderA - orderB;
+        const aLatestOutcome =
+          a.outcomes && a.outcomes.length > 0
+            ? Math.max(...a.outcomes.map((o) => new Date(o.created_at).getTime()))
+            : 0;
+        const aActivity = Math.max(new Date(a.created_at).getTime(), aLatestOutcome);
+
+        const bLatestOutcome =
+          b.outcomes && b.outcomes.length > 0
+            ? Math.max(...b.outcomes.map((o) => new Date(o.created_at).getTime()))
+            : 0;
+        const bActivity = Math.max(new Date(b.created_at).getTime(), bLatestOutcome);
+
+        return bActivity - aActivity;
       });
     }
 
