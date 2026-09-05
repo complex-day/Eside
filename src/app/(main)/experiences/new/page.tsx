@@ -19,13 +19,13 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertCircle,
   ArrowLeft,
   Loader2,
-  Send,
   Tag,
   HelpCircle,
 } from "lucide-react";
