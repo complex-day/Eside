@@ -7,8 +7,10 @@ import { ProgressionBanner } from "@/components/feed/ProgressionBanner";
 import { BotanicalHero } from "@/components/feed/BotanicalHero";
 import { FeedTabs } from "@/components/feed/FeedTabs";
 import { FeedSearchBar } from "@/components/feed/FeedSearchBar";
+import { Button } from "@/components/ui/button";
 import { normalizeTag } from "@/lib/validations/experience";
 import { calculateJourneyMeta } from "@/lib/journey-helpers";
+import { Plus, Milestone, Search, X } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 

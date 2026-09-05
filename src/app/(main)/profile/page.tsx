@@ -8,6 +8,17 @@ import { determineJourneyStage } from "@/lib/journey-signals";
 import { calculateJourneyMeta } from "@/lib/journey-helpers";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Calendar,
+  Plus,
+  Edit3,
+  FileText,
+  ArrowRight,
+  Milestone,
+  Clock,
+  Bookmark,
+  Archive,
+} from "lucide-react";
 
 
 export const metadata = {
